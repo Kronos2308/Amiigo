@@ -169,6 +169,7 @@ void AmiigoUI::GetInput()
 						//A pressed
 						else if(Event->jbutton.button == 0)
 						{
+							ImgSel = AmiiboList->SelectedIndex+1;
 							if(AmiiboList->IsActive)
 							{
 								SetAmiibo(AmiiboList->SelectedIndex);
@@ -181,12 +182,15 @@ void AmiigoUI::GetInput()
 						//B pressed
 						else if(Event->jbutton.button == 1)
 						{
+							ImgSel = AmiiboList->SelectedIndex+1;
 							ListDir = GoUpDir(ListDir);
 							ScanForAmiibos();
 						}
 						//Left stick or minus pressed
 						else if(Event->jbutton.button == 4|| Event->jbutton.button == 11)
 						{
+							//reset sel img
+							ImgSel = AmiiboList->SelectedIndex+1;
 							//Delete Amiibo. This is temporary until I have time to implement a proper menu for deleting and renaming
 							char PathToAmiibo[FS_MAX_PATH] = ""; //Without assigning we get a random char. Why?
 							strcat(PathToAmiibo, ListDir.c_str());
@@ -235,15 +239,15 @@ void AmiigoUI::DrawUI()
 	MenuList->DrawList();
 	DrawButtonBorders(renderer, AmiiboList, MenuList, HeaderHeight, FooterHeight, *Width, *Height, false);
 	
-			int maxL =  Files.size()-1;
+		int maxL =  Files.size()-1;
 		if ((AmiiboList->SelectedIndex != ImgSel)&AmiiboList->IsActive)
 		{
 			if (maxL >= 0)
 			{
 				int list = AmiiboList->SelectedIndex;
 				ImgSel = AmiiboList->SelectedIndex;
-				printf("Total Amiibos %ld \n",Files.size() );
-				printf("set %d = %d\n",AmiiboList->SelectedIndex,ImgSel);
+				//printf("Total Amiibos %ld \n",Files.size() );
+				//printf("set %d = %d\n",AmiiboList->SelectedIndex,ImgSel);
 				//control leth to not crash
 				if (list < 0){list = maxL;}
 				if ((list > maxL)&(list > 0)) {list = 0;}
@@ -253,7 +257,8 @@ void AmiigoUI::DrawUI()
 				if(CheckFileExists(ImgPath)&(fsize(ImgPath) != 0)){
 					BIcon = IMG_Load(ImgPath.c_str());
 				}else{
-					BIcon = IMG_Load("romfs:/unknow.png");
+					if(CheckFileExists(std::string(ListDir)+ std::string(Files.at(list).d_name)+"/amiibo.json"))
+					{BIcon = IMG_Load("romfs:/unknow.png");}else{BIcon = IMG_Load("romfs:/folder.png");}
 				}
 			//close
 			}
@@ -309,6 +314,7 @@ void AmiigoUI::DrawHeader()
 		//If the register file doesn't exist display message. This prevents a infinate loop.
 		if(!FileReader){
 			HeaderText = "Missing amiibo json!";
+			AIcon = NULL;
 			emu::TryParseVirtualAmiibo(CurrentAmiibo, FS_MAX_PATH, &C_active_amiibo_data);
 		} 
 		else //Else get the amiibo name from the json
@@ -456,7 +462,10 @@ void AmiigoUI::ScanForAmiibos()
 	AmiiboList->ListingTextVec.clear();
 	for(int i = 0; i < (int)Files.size(); i++)
 	{
-		AmiiboList->ListingTextVec.push_back(Files.at(i).d_name);
+		std::string item;
+		if(CheckFileExists(ListDir+"/"+std::string(Files.at(i).d_name)+"/amiibo.json" ))
+		{item = "> "+std::string(Files.at(i).d_name);}else{item = std::string(Files.at(i).d_name)+"/";}
+		AmiiboList->ListingTextVec.push_back(item.c_str());
 	}
 }
 

@@ -202,9 +202,7 @@ void CreatorUI::GetInput()
 							HasSelectedSeries = false;
 						}else if(Event->jbutton.button == 11)
 						{
-							Creatype++;
-							if(Creatype > 3)
-								Creatype = 0;
+							Creatype++; if(Creatype > 1) {Creatype = 0;}
 						}
 
                     }
@@ -266,12 +264,13 @@ void CreatorUI::ListSelect()
 			break;
 			
 			case 1:
-			AmiiboPath += JData["amiibo"][IndexInJdata]["amiiboSeries"].get<std::string>();
-			mkdir(AmiiboPath.c_str(), 0777);
+			AmiiboPath += JData["amiibo"][IndexInJdata]["amiiboSeries"].get<std::string>()+"_";
+			mkdir(AmiiboPath.c_str(), 0);
 			AmiiboPath += "/"+ JData["amiibo"][IndexInJdata]["name"].get<std::string>();
 			break;
 			
-			case 2:
+			//todo
+/*			case 2:
 			AmiiboPath += JData["amiibo"][IndexInJdata]["character"].get<std::string>();
 			mkdir(AmiiboPath.c_str(), 0777);
 			AmiiboPath += "/"+ JData["amiibo"][IndexInJdata]["name"].get<std::string>();
@@ -282,10 +281,10 @@ void CreatorUI::ListSelect()
 			mkdir(AmiiboPath.c_str(), 0777);
 			AmiiboPath += "/"+ JData["amiibo"][IndexInJdata]["name"].get<std::string>();
 			break;
-		}	
+*/		}	
 
- 		PleaseWait("Please wait, building:\n"+AmiiboPath+"...");
-		mkdir(AmiiboPath.c_str(), 0777);
+ 		PleaseWait("Please wait, building:\n\n  "+AmiiboPath.substr(20)+"...");
+		mkdir(AmiiboPath.c_str(), 0);
 		
         //Write amiibo.json
         string FilePath = AmiiboPath + "/amiibo.json";
@@ -325,9 +324,6 @@ void CreatorUI::ListSelect()
 			if(AmiiboVarsVec.at(i).AmiiboSeries == SelectedSeries)
 			{
 				SortedAmiiboVarsVec.push_back(AmiiboVarsVec.at(i));
-				if(CheckFileExists(*CurrentPath + AmiiboVarsVec.at(i).AmiiboName +"/tag.json"))
-					SeriesList->ListingTextVec.push_back("* "+AmiiboVarsVec.at(i).AmiiboName);
-					else
 					SeriesList->ListingTextVec.push_back(AmiiboVarsVec.at(i).AmiiboName);
 
 				//SeriesList->ListingTextVec.push_back(SortedAmiiboVarsVec.at(SortedAmiiboVarsVec.size()-1).AmiiboName);

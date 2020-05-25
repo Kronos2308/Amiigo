@@ -210,6 +210,11 @@ void AmiigoUI::GetInput()
 	//Check if list item selected via touch screen
 	if(AmiiboList->ItemSelected)
 	{
+	if (AmiiboList->SelectedIndex > (int)Files.size()-1){
+		AmiiboList->CursorIndex--;
+		AmiiboList->SelectedIndex--;
+		ImgSel = AmiiboList->SelectedIndex;
+	}//limit var to evoid a crash, get here by touch screen
 		SetAmiibo(AmiiboList->SelectedIndex);
 		MenuList->IsActive = false;
 		AmiiboList->IsActive = true;
@@ -250,10 +255,10 @@ void AmiigoUI::DrawUI()
 		if (maxL >= 0)
 		{
 			int list = AmiiboList->SelectedIndex;
-			ImgSel = AmiiboList->SelectedIndex;
 			//control leth to not crash
 			if (list < 0){list = maxL;}
-			if ((list > maxL)&(list > 0)) {list = 0;}
+			if ((list > maxL)&(list > 0)) {list = maxL;}
+			ImgSel = AmiiboList->SelectedIndex;
 									
 			//printf("Total Amiibos %ld \n",Files.size() );
 			//printf("set %d = %d\n",AmiiboList->SelectedIndex,ImgSel);
@@ -504,7 +509,7 @@ void AmiigoUI::PleaseWait(string mensage)
 
 void AmiigoUI::SetAmiibo(int Index)
 {
-	if (Index > (int)Files.size()-1){ Index = Files.size()-1;}//limit var to evoid a crash
+	if (Index > (int)Files.size()-1){AmiiboList->CursorIndex--; AmiiboList->SelectedIndex--; Index = Files.size()-1;}//control if any other is skiped
 	if (strstr(Files.at(Index).d_name, "..") != NULL){ListDir = GoUpDir(ListDir); ScanForAmiibos(); return;}//go up dir if .. is selected
 	char PathToAmiibo[FS_MAX_PATH] = "";
 	strcat(PathToAmiibo, ListDir.c_str());

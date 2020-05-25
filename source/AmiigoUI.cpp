@@ -169,7 +169,7 @@ void AmiigoUI::GetInput()
 						//A pressed
 						else if(Event->jbutton.button == 0)
 						{
-							ImgSel = AmiiboList->SelectedIndex+1;
+							ImgSel = AmiiboList->SelectedIndex+3;
 							if(AmiiboList->IsActive)
 							{
 								SetAmiibo(AmiiboList->SelectedIndex);
@@ -182,7 +182,7 @@ void AmiigoUI::GetInput()
 						//B pressed
 						else if(Event->jbutton.button == 1)
 						{
-							ImgSel = AmiiboList->SelectedIndex+1;
+							ImgSel = AmiiboList->SelectedIndex+3;
 							ListDir = GoUpDir(ListDir);
 							ScanForAmiibos();
 						}
@@ -190,7 +190,7 @@ void AmiigoUI::GetInput()
 						else if(Event->jbutton.button == 4|| Event->jbutton.button == 11)
 						{
 							//reset sel img
-							ImgSel = AmiiboList->SelectedIndex+1;
+							ImgSel = AmiiboList->SelectedIndex+3;
 							//Delete Amiibo. This is temporary until I have time to implement a proper menu for deleting and renaming
 							char PathToAmiibo[FS_MAX_PATH] = ""; //Without assigning we get a random char. Why?
 							strcat(PathToAmiibo, ListDir.c_str());
@@ -231,7 +231,7 @@ void AmiigoUI::DrawUI()
 	
 	//draw amiibo image
 	SDL_Texture* Headericon = SDL_CreateTextureFromSurface(renderer, AIcon);
-	SDL_Rect ImagetRect = {5, 0 , 65, 80};
+	SDL_Rect ImagetRect = {5, 0 , (AIcon->w * (80 * 100 /AIcon->h) /100),80};// 65  80
 	SDL_RenderCopy(renderer, Headericon , NULL, &ImagetRect);
 	SDL_DestroyTexture(Headericon);
 				
@@ -239,44 +239,46 @@ void AmiigoUI::DrawUI()
 	MenuList->DrawList();
 	DrawButtonBorders(renderer, AmiiboList, MenuList, HeaderHeight, FooterHeight, *Width, *Height, false);
 	
-		int maxL =  Files.size()-1;
-		if ((AmiiboList->SelectedIndex != ImgSel)&AmiiboList->IsActive)
+	int maxL =  Files.size()-1;
+	if ((AmiiboList->SelectedIndex != ImgSel)&AmiiboList->IsActive)
+	{
+		if (maxL >= 0)
 		{
-			if (maxL >= 0)
-			{
-				int list = AmiiboList->SelectedIndex;
-				ImgSel = AmiiboList->SelectedIndex;
-				//printf("Total Amiibos %ld \n",Files.size() );
-				//printf("set %d = %d\n",AmiiboList->SelectedIndex,ImgSel);
-				//control leth to not crash
-				if (list < 0){list = maxL;}
-				if ((list > maxL)&(list > 0)) {list = 0;}
-										
-				//load the selected image
-				string ImgPath = std::string(ListDir)+ std::string(Files.at(list).d_name)+"/amiibo.png";
-				if(CheckFileExists(ImgPath)&(fsize(ImgPath) != 0)){
-					BIcon = IMG_Load(ImgPath.c_str());
-				}else{
-					if(CheckFileExists(std::string(ListDir)+ std::string(Files.at(list).d_name)+"/amiibo.json"))
-					{BIcon = IMG_Load("romfs:/unknow.png");}else{BIcon = IMG_Load("romfs:/folder.png");}
-				}
-			//close
+			int list = AmiiboList->SelectedIndex;
+			ImgSel = AmiiboList->SelectedIndex;
+			//control leth to not crash
+			if (list < 0){list = maxL;}
+			if ((list > maxL)&(list > 0)) {list = 0;}
+									
+			//load the selected image
+			string ImgPath = std::string(ListDir)+ std::string(Files.at(list).d_name)+"/amiibo.png";
+			if(CheckFileExists(ImgPath)&(fsize(ImgPath) != 0)){
+				BIcon = IMG_Load(ImgPath.c_str());
+			}else{
+				if(CheckFileExists(std::string(ListDir)+ std::string(Files.at(list).d_name)+"/amiibo.json"))
+				{BIcon = IMG_Load("romfs:/unknow.png");}else{BIcon = IMG_Load("romfs:/folder.png");}
 			}
 		}
+	}
+		
 		
 	if (maxL >= 0)
 	{
-	DrawJsonColorConfig(renderer, "UI_borders_list");
-	//SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
-	SDL_Rect HeaderRect = {690,73, 270, 286};
-	SDL_RenderFillRect(renderer, &HeaderRect);
+		DrawJsonColorConfig(renderer, "UI_borders_list");
+		//SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+		SDL_Rect HeaderRect = {690,73, 270, 286};
+		SDL_RenderFillRect(renderer, &HeaderRect);
 	}
-	
-	//draw sel amiibo image
-				SDL_Texture* Headericon2 = SDL_CreateTextureFromSurface(renderer, BIcon);
-				SDL_Rect ImagetRect2 = {695, 75 , 260, 280};
-				SDL_RenderCopy(renderer, Headericon2 , NULL, &ImagetRect2);
-				SDL_DestroyTexture(Headericon2);
+		
+	if(AmiiboList->IsActive)
+	{
+		//draw select amiibo image
+		SDL_Texture* Headericon2 = SDL_CreateTextureFromSurface(renderer, BIcon);
+		int HS = 280, WS = (BIcon->w * (HS * 1000 /BIcon->h) /1000);// printf("print size: %dx%d\n",WS,HS);
+		SDL_Rect ImagetRect2 = {695 + (WS < 260 ? (260 - WS)/2 : 0), 75 , WS > 260 ? 260 : WS, HS};
+		SDL_RenderCopy(renderer, Headericon2 , NULL, &ImagetRect2);
+		SDL_DestroyTexture(Headericon2);
+	}
 	
 	//Reset touch coords
 	TouchX = -1;
@@ -436,6 +438,18 @@ void AmiigoUI::ScanForAmiibos()
 	AmiiboList->SelectedIndex = 0;
 	AmiiboList->CursorIndex = 0;
 	AmiiboList->ListRenderOffset = 0;
+
+	//back directory, doit better
+	if (ListDir != "sdmc:/emuiibo/amiibo/"){
+		DIR* root = opendir("sdmc:/emuiibo");
+		struct dirent* back=readdir(root);
+		strcpy(back->d_name, "..");
+		Files.push_back(*back);
+		closedir(root);
+		AmiiboList->CursorIndex++;
+		AmiiboList->SelectedIndex++;
+	}
+	
 	//Do the actual scanning
 	DIR* dir;
 	struct dirent* ent;
@@ -488,6 +502,7 @@ void AmiigoUI::PleaseWait(string mensage)
 void AmiigoUI::SetAmiibo(int Index)
 {
 	if (Index > (int)Files.size()-1){ Index = Files.size()-1;}//limit var to evoid a crash
+	if (strstr(Files.at(Index).d_name, "..") != NULL){ListDir = GoUpDir(ListDir); ScanForAmiibos(); return;}//go up dir if .. is selected
 	char PathToAmiibo[FS_MAX_PATH] = "";
 	strcat(PathToAmiibo, ListDir.c_str());
 	strcat(PathToAmiibo, Files.at(Index).d_name);

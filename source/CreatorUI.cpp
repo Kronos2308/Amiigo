@@ -301,7 +301,7 @@ void CreatorUI::ListSelect()
 		//create icon
 		string iconname = AmiiboPath+"/amiibo.png";
 		string icontemp = AmiiboPath+"/amiibo.temp";
-		if(!CheckFileExists(iconname)){
+		if(!CheckFileExists(iconname)&HasConnection()){
 			RetrieveToFile(JData["url"].get<std::string>()+JData["amiibo"][IndexInJdata]["image"].get<std::string>(), icontemp);
 			if (fsize(icontemp) != 0) rename(icontemp.c_str(), iconname.c_str());
 		}

@@ -53,23 +53,30 @@ std::string RetrieveContent(std::string URL, std::string MIMEType)
 
 void RetrieveToFile(std::string URL, std::string Path)
 {
-    FILE *f = fopen(Path.c_str(), "wb");
-    if(f)
-    {
-        CURL *curl = curl_easy_init();
-        curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Amiigo");
-		curl_easy_setopt(curl, CURLOPT_CAINFO, "romfs:/certificate.pem");
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlFileWrite);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
-        curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
-		CURLcode res = curl_easy_perform(curl);	if (res != CURLE_OK) printf("\n%s\n%s\n%s\n",curl_easy_strerror(res),URL.c_str(),Path.c_str());
-        curl_easy_cleanup(curl);
-    }
-    fclose(f);
+	CURLcode res = CURLE_OK;
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+	CURL *curl = curl_easy_init();
+	if (curl) {
+		FILE *f = fopen(Path.c_str(), "wb");
+		if(f)
+		{
+			curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
+			curl_easy_setopt(curl, CURLOPT_USERAGENT, "Amiigo");
+			curl_easy_setopt(curl, CURLOPT_CAINFO, "romfs:/certificate.pem");
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlFileWrite);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
+			curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
+			res = curl_easy_perform(curl);
+			curl_easy_cleanup(curl);
+		}
+	fclose(f);
+	}else{
+        res = CURLE_HTTP_RETURNED_ERROR;			
+	}
+	if (res != CURLE_OK) printf("\n%s\n%s\n%s\n",curl_easy_strerror(res),URL.c_str(),Path.c_str());
 }
 
 //I made this so even though it's only one two calls it's probably janky.
@@ -147,7 +154,7 @@ void APIDownloader()
 	mkdir("sdmc:/config/amiigo/", 0);
 	if(HasConnection())
 	{
-	RetrieveToFile("http://myrincon.duckdns.org/hollow/emupi.php", "/config/amiigo/API.temp");
+	RetrieveToFile("http://myrincon.duckdns.org/hollow/emupi.php", "sdmc:/config/amiigo/API.temp");
 		if(CheckFileExists("sdmc:/config/amiigo/API.temp")&(fsize("sdmc:/config/amiigo/API.temp") != 0)){
 		remove("sdmc:/config/amiigo/API.json");
 		rename("sdmc:/config/amiigo/API.temp", "sdmc:/config/amiigo/API.json");

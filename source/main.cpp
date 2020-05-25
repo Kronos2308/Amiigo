@@ -20,8 +20,10 @@ int main(int argc, char *argv[])
 romfsInit();
 socketInitializeDefault();
 //debug nxlink
-nxlinkStdio(); 
-printf("printf output now goes to nxlink server\n");
+#ifdef DEBUG
+    nxlinkStdio();
+    printf("printf output now goes to nxlink server\n");
+#endif
 std::thread  first;
 first = std::thread(APIDownloader);
 //std::thread second = std::thread(IconDownloader);
@@ -107,10 +109,18 @@ first = std::thread(APIDownloader);
 				MainUI->GetInput();
 				MainUI->DrawUI();
 				//If the user has switched to the maker UI and the data isn't read show the please wait message
-				if((AmiigoGenUI == NULL) & (WindowState == 1) & (!CheckFileExists("sdmc:/config/amiigo/API.json")))
+				if ((AmiigoGenUI == NULL) & (WindowState == 1))
 				{
-					//Display the please wait message
-					MainUI->PleaseWait("Please wait while we get data from the Amiibo API...");
+					if (!CheckFileExists("sdmc:/config/amiigo/API.json")&(HasConnection()))
+					{
+						//Display the please wait message
+						MainUI->PleaseWait("Please wait while we get data from the Amiibo API...");
+						SDL_RenderPresent(renderer);
+						SDL_Delay(2000);
+						//go back if Api isn't ready
+						if (!CheckFileExists("sdmc:/config/amiigo/API.json"))
+						WindowState = 0;
+					}
 				}
 			}
 			break;

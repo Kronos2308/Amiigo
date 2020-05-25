@@ -15,6 +15,7 @@ SDL_Surface* AIcon;//surface buffer to amiibo image
 SDL_Surface* BIcon;//surface buffer to amiibo sel image
 int ImgAct = 1; //load image triger
 int ImgSel = 1; //load sel image triger
+char CurrentAmiibo[FS_MAX_PATH] = {0};//active amiibo
 extern bool g_emuiibo_init_ok;
 
 class AmiigoUI
@@ -195,8 +196,11 @@ void AmiigoUI::GetInput()
 							char PathToAmiibo[FS_MAX_PATH] = ""; //Without assigning we get a random char. Why?
 							strcat(PathToAmiibo, ListDir.c_str());
 							strcat(PathToAmiibo, Files.at(AmiiboList->SelectedIndex).d_name);
+							//make sure not delete the active amiibo
+							if(strstr(CurrentAmiibo,PathToAmiibo) == NULL){
 							fsdevDeleteDirectoryRecursively(PathToAmiibo);
 							ScanForAmiibos();
+							}
 						}
                    }
                     break;
@@ -237,6 +241,7 @@ void AmiigoUI::DrawUI()
 				
 	AmiiboList->DrawList();
 	MenuList->DrawList();
+	
 	DrawButtonBorders(renderer, AmiiboList, MenuList, HeaderHeight, FooterHeight, *Width, *Height, false);
 	
 	int maxL =  Files.size()-1;
@@ -250,6 +255,8 @@ void AmiigoUI::DrawUI()
 			if (list < 0){list = maxL;}
 			if ((list > maxL)&(list > 0)) {list = 0;}
 									
+			//printf("Total Amiibos %ld \n",Files.size() );
+			//printf("set %d = %d\n",AmiiboList->SelectedIndex,ImgSel);
 			//load the selected image
 			string ImgPath = std::string(ListDir)+ std::string(Files.at(list).d_name)+"/amiibo.png";
 			if(CheckFileExists(ImgPath)&(fsize(ImgPath) != 0)){
@@ -268,16 +275,16 @@ void AmiigoUI::DrawUI()
 		//SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_Rect HeaderRect = {690,73, 270, 286};
 		SDL_RenderFillRect(renderer, &HeaderRect);
-	}
 		
-	if(AmiiboList->IsActive)
-	{
-		//draw select amiibo image
-		SDL_Texture* Headericon2 = SDL_CreateTextureFromSurface(renderer, BIcon);
-		int HS = 280, WS = (BIcon->w * (HS * 1000 /BIcon->h) /1000);// printf("print size: %dx%d\n",WS,HS);
-		SDL_Rect ImagetRect2 = {695 + (WS < 260 ? (260 - WS)/2 : 0), 75 , WS > 260 ? 260 : WS, HS};
-		SDL_RenderCopy(renderer, Headericon2 , NULL, &ImagetRect2);
-		SDL_DestroyTexture(Headericon2);
+		if(AmiiboList->IsActive)
+		{
+			//draw select amiibo image
+			SDL_Texture* Headericon2 = SDL_CreateTextureFromSurface(renderer, BIcon);
+			int HS = 280, WS = (BIcon->w * (HS * 1000 /BIcon->h) /1000);// printf("print size: %dx%d\n",WS,HS);
+			SDL_Rect ImagetRect2 = {695 + (WS < 260 ? (260 - WS)/2 : 0), 75 , WS > 260 ? 260 : WS, HS};
+			SDL_RenderCopy(renderer, Headericon2 , NULL, &ImagetRect2);
+			SDL_DestroyTexture(Headericon2);
+		}
 	}
 	
 	//Reset touch coords
@@ -292,12 +299,9 @@ void AmiigoUI::DrawHeader()
 	SDL_Rect HeaderRect = {0,0, *Width, HeaderHeight};
 	SDL_RenderFillRect(renderer, &HeaderRect);
 	//Get the Amiibo path
-	char CurrentAmiibo[FS_MAX_PATH] = {0};
 	string HeaderText = "";
     emu::VirtualAmiiboData g_active_amiibo_data;
-    emu::VirtualAmiiboData C_active_amiibo_data;
     emu::GetActiveVirtualAmiibo(&g_active_amiibo_data, CurrentAmiibo, FS_MAX_PATH);
-
 	//String is empty so we need to set it to something so SDL doesn't crash
 	if(CurrentAmiibo[0] == '\0'||!g_emuiibo_init_ok)
 	{
@@ -316,8 +320,7 @@ void AmiigoUI::DrawHeader()
 		//If the register file doesn't exist display message. This prevents a infinate loop.
 		if(!FileReader){
 			HeaderText = "Missing amiibo json!";
-			AIcon = NULL;
-			emu::TryParseVirtualAmiibo(CurrentAmiibo, FS_MAX_PATH, &C_active_amiibo_data);
+			AIcon = IMG_Load("romfs:/Amiibo.png");//empty icon
 		} 
 		else //Else get the amiibo name from the json
 		{
@@ -346,7 +349,7 @@ void AmiigoUI::DrawHeader()
 					}else{
 						ImgAct = 0;//set image triger off
 						printf("Image %s Missing KO\n",imageI.c_str());
-						AIcon = IMG_Load("romfs:/Amibo.png");//empty icon
+						AIcon = IMG_Load("romfs:/Amiibo.png");//empty icon
 					}
 				}
 			}else HeaderText = "amiibo.json bad sintax";

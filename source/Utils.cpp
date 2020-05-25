@@ -41,17 +41,11 @@ bool CheckFileExists(string Path)
 
 string GoUpDir(string Path)
 {
-	char CurrentPath[Path.length()] = "";
-	strcat(CurrentPath, Path.c_str());
-	CurrentPath[Path.length()-1] = 0x00;
-	Path = CurrentPath;
-	int LastSlash = Path.find_last_of('/');
-	CurrentPath[LastSlash] = 0x00;
-	if(strlen(CurrentPath) < 21)
-	{
-		return "sdmc:/emuiibo/amiibo/";
-	}
-	return CurrentPath;
+	Path = Path.substr(0,Path.find_last_of("/\\"));
+	Path = Path.substr(0,Path.find_last_of("/\\")+1);
+	printf("%s\n",Path.c_str());
+	if (Path.size() < 21) return "sdmc:/emuiibo/amiibo/";
+	return Path;
 }
 
 /*

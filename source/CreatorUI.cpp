@@ -256,7 +256,6 @@ void CreatorUI::ListSelect()
 	{
 		int IndexInJdata = SortedAmiiboVarsVec.at(SeriesList->SelectedIndex).ListIndex;
         string AmiiboPath = *CurrentPath ;
-		if (AmiiboPath != "sdmc:/emuiibo/amiibo/") {Creatype = 0;}//force name if you are not on root
 		switch(Creatype)
 		{
 			case 0:
@@ -264,6 +263,7 @@ void CreatorUI::ListSelect()
 			break;
 			
 			case 1:
+			AmiiboPath = "sdmc:/emuiibo/amiibo/";//force root if you are not on root
 			AmiiboPath += JData["amiibo"][IndexInJdata]["amiiboSeries"].get<std::string>()+"_";
 			mkdir(AmiiboPath.c_str(), 0);
 			AmiiboPath += "/"+ JData["amiibo"][IndexInJdata]["name"].get<std::string>();
@@ -271,13 +271,15 @@ void CreatorUI::ListSelect()
 			
 			//todo
 /*			case 2:
-			AmiiboPath += JData["amiibo"][IndexInJdata]["character"].get<std::string>();
+			AmiiboPath = "sdmc:/emuiibo/amiibo/";//force root if you are not on root
+			AmiiboPath += JData["amiibo"][IndexInJdata]["character"].get<std::string>()+"_";
 			mkdir(AmiiboPath.c_str(), 0777);
 			AmiiboPath += "/"+ JData["amiibo"][IndexInJdata]["name"].get<std::string>();
 			break;
 			
 			case 3:
-			AmiiboPath += JData["amiibo"][IndexInJdata]["gameSeries"].get<std::string>();
+			AmiiboPath = "sdmc:/emuiibo/amiibo/";//force root if you are not on root
+			AmiiboPath += JData["amiibo"][IndexInJdata]["gameSeries"].get<std::string>()+"_";
 			mkdir(AmiiboPath.c_str(), 0777);
 			AmiiboPath += "/"+ JData["amiibo"][IndexInJdata]["name"].get<std::string>();
 			break;

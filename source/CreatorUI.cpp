@@ -380,7 +380,8 @@ void CreatorUI::ListSelect()
 		string icontemp = AmiiboPath+"/amiibo.temp";
 		string iconDBex = "sdmc:/config/amiigo/IMG/"+JData["amiibo"][IndexInJdata]["image"].get<std::string>();
 		//if exist local used from there
-		if(CheckFileExists(iconDBex)&(fsize(iconDBex) != 0)) copy_me(iconDBex, iconname);
+		if(!CheckFileExists(iconname)&CheckFileExists(iconDBex)&(fsize(iconDBex) != 0)) copy_me(iconDBex, iconname);
+		
 		//get the icon from online
 		if(!CheckFileExists(iconname)&HasConnection()){
 			RetrieveToFile(JData["url"].get<std::string>()+JData["amiibo"][IndexInJdata]["image"].get<std::string>(), icontemp);

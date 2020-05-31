@@ -42,7 +42,7 @@ X toggles emulation state.
 
 B backs out of the folder.
 
-Left stick pressed down (like a button) or - delete an Amiibo
+Left stick pressed down (like a button) or \-\- delete an Amiibo
 
 * Amiibo Maker
 
@@ -50,7 +50,7 @@ A create Amiibo
 
 R Download icon from Selected Amiibo
 
-- Change list categories (amiiboSeries, character, gameSeries) / Change Build location (by categories, by amiibo name on selected folder)
+\-\- Change list categories (amiiboSeries, character, gameSeries) / Change Build location (by categories, by amiibo name on selected folder)
 
 B backs out of the Amiibo series if one is selected in Amiibo Maker.
 

@@ -45,7 +45,7 @@ INCLUDES	:=	include
 ROMFS	:=	romfs
 APP_TITLE := Amiigo
 APP_AUTHOR := Kronos2308 Fork of CompSciOrBust
-APP_VERSION := 1.6.4
+APP_VERSION := 1.6.5
 
 #---------------------------------------------------------------------------------
 # options for code generation

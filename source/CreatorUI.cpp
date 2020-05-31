@@ -360,7 +360,7 @@ void CreatorUI::ListSelect()
 			break;
 		}	
 
- 		PleaseWait("Please wait, building:\n\n  "+AmiiboPath.substr(20)+"...");//
+ 		PleaseWait("Building: "+AmiiboPath.substr(20)+"...");//
 		mkdir(AmiiboPath.c_str(), 0);
 		
         //Write amiibo.json

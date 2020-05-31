@@ -15,7 +15,11 @@
 using namespace std;
 using json = nlohmann::json;
 
+SDL_Surface* CIcon;//surface buffer to amiibo sel image
+int Ordetype = 1;
 int Creatype = 0;
+int DownPrev = 0;
+int imgres = 20;
 
 class AmiiboVars
 {
@@ -48,6 +52,7 @@ class CreatorUI
 	vector<AmiiboVars> SortedAmiiboVarsVec;
 	string AmiiboAPIString = "";
 	void PleaseWait(string mensage);
+	void Createlist();
 	public:
 	CreatorUI();
 	void GetInput();
@@ -78,11 +83,33 @@ CreatorUI::CreatorUI()
 	
 	//Create the lists
 	SeriesList = new ScrollList();
+	Createlist();
+}
+
+void CreatorUI::Createlist()
+{
+	AmiiboVarsVec.clear();
+	SeriesVec.clear();
+	string List = "amiiboSeries";
+	switch(Ordetype)
+	{
+		case 1:
+		List = "amiiboSeries";
+		break;
+		
+		case 2:
+		List = "character";
+		break;
+		
+		case 3:
+		List = "gameSeries";
+		break;
+	}	
 	//Get all of the Series' names and add Amiibos to the AmiiboVarsVec
 	for(int i = 0; i < JDataSize; i++)
 	{
 		bool IsInVec = false;
-		string SeriesName = JData["amiibo"][i]["amiiboSeries"].get<std::string>();
+		string SeriesName = JData["amiibo"][i][List].get<std::string>();
 		
 		//Add data to the AmiiboVarsVec
 		AmiiboVars TempAmiiboVars;
@@ -103,9 +130,10 @@ CreatorUI::CreatorUI()
 		}
 		if(!IsInVec)
 		{
-			SeriesVec.push_back(JData["amiibo"][i]["amiiboSeries"].get<std::string>());
+			SeriesVec.push_back(JData["amiibo"][i][List].get<std::string>());
 		}
 	}
+	
 }
 
 void CreatorUI::InitList()
@@ -145,6 +173,11 @@ void CreatorUI::GetInput()
 						{
                             *IsDone = 1;
                         }
+						//L pressed preview
+						else if(Event->jbutton.button == 7)
+						{
+							if(SeriesList->IsActive&HasSelectedSeries) {DownPrev = 1;}
+						}
 						//Up pressed
 						else if(Event->jbutton.button == 13||Event->jbutton.button == 17)
 						{
@@ -202,7 +235,9 @@ void CreatorUI::GetInput()
 							HasSelectedSeries = false;
 						}else if(Event->jbutton.button == 11)
 						{
-							Creatype++; if(Creatype > 1) {Creatype = 0;}
+							if(HasSelectedSeries){Creatype++; if(Creatype > 1) {Creatype = 0;}}
+							else
+							{Ordetype++; if(Ordetype > 3) {Ordetype = 1;} CreatorUI::Createlist();CreatorUI::InitList();}
 						}
 
                     }
@@ -230,6 +265,45 @@ void CreatorUI::DrawUI()
 	SeriesList->DrawList();
 	MenuList->DrawList();
 	DrawFooter();
+	
+	if(HasSelectedSeries){
+		//Draw box
+		DrawJsonColorConfig(renderer, "UI_borders_list");
+		SDL_Rect HeaderRect = {690,73, 270, 286};
+		SDL_RenderFillRect(renderer, &HeaderRect);
+	}
+
+	//preview draw                            //bound check
+	if(HasSelectedSeries&SeriesList->IsActive&(SeriesList->SelectedIndex < (int)SortedAmiiboVarsVec.size())){
+		int IndexInJdata = SortedAmiiboVarsVec.at(SeriesList->SelectedIndex).ListIndex;
+		string ImgPath = "sdmc:/config/amiigo/IMG/"+JData["amiibo"][IndexInJdata]["image"].get<std::string>();
+		//download preview by user input
+		if (DownPrev){
+			if(!CheckFileExists(ImgPath)&HasConnection()){
+			PleaseWait("Please wait, Downloading...");
+				string icontemp = ImgPath+".temp";
+				RetrieveToFile(JData["url"].get<std::string>()+JData["amiibo"][IndexInJdata]["image"].get<std::string>(), icontemp);
+				if (fsize(icontemp) != 0) rename(icontemp.c_str(), ImgPath.c_str());
+			}
+			imgres++;
+			DownPrev = 0;
+		}
+		//load prev img	
+		if (imgres != SeriesList->SelectedIndex)
+		{
+			imgres = SeriesList->SelectedIndex;
+			if(CheckFileExists(ImgPath)&(fsize(ImgPath) != 0)) CIcon = IMG_Load(ImgPath.c_str()); else CIcon = IMG_Load("romfs:/download.png");	
+			printf("%s\n",ImgPath.c_str());
+		} 
+
+		//draw select amiibo image
+		SDL_Texture* Headericon2 = SDL_CreateTextureFromSurface(renderer, CIcon);
+		int HS = 280, WS = (CIcon->w * (HS * 1000 /CIcon->h) /1000);// printf("print size: %dx%d\n",WS,HS);
+		SDL_Rect ImagetRect2 = {695 + (WS < 260 ? (260 - WS)/2 : 0), 75 , WS > 260 ? 260 : WS, HS};
+		SDL_RenderCopy(renderer, Headericon2 , NULL, &ImagetRect2);
+		SDL_DestroyTexture(Headericon2);
+	} else imgres = 20; //reload image if go back
+
 	DrawButtonBorders(renderer, SeriesList, MenuList, HeaderHeight, FooterHeight, *Width, *Height, true);
 	//Check if list item selected via touch screen
 	if(SeriesList->ItemSelected)
@@ -263,29 +337,30 @@ void CreatorUI::ListSelect()
 			break;
 			
 			case 1:
+				string List = "amiiboSeries";
+				switch(Ordetype)
+				{
+					case 1:
+					List = "amiiboSeries";
+					break;
+					
+					case 2:
+					List = "character";
+					break;
+					
+					case 3:
+					List = "gameSeries";
+					break;
+				}	
+
 			AmiiboPath = "sdmc:/emuiibo/amiibo/";//force root if you are not on root
-			AmiiboPath += JData["amiibo"][IndexInJdata]["amiiboSeries"].get<std::string>()+"_";
+			AmiiboPath += JData["amiibo"][IndexInJdata][List].get<std::string>()+"_";
 			mkdir(AmiiboPath.c_str(), 0);
 			AmiiboPath += "/"+ JData["amiibo"][IndexInJdata]["name"].get<std::string>();
 			break;
-			
-			//todo
-/*			case 2:
-			AmiiboPath = "sdmc:/emuiibo/amiibo/";//force root if you are not on root
-			AmiiboPath += JData["amiibo"][IndexInJdata]["character"].get<std::string>()+"_";
-			mkdir(AmiiboPath.c_str(), 0777);
-			AmiiboPath += "/"+ JData["amiibo"][IndexInJdata]["name"].get<std::string>();
-			break;
-			
-			case 3:
-			AmiiboPath = "sdmc:/emuiibo/amiibo/";//force root if you are not on root
-			AmiiboPath += JData["amiibo"][IndexInJdata]["gameSeries"].get<std::string>()+"_";
-			mkdir(AmiiboPath.c_str(), 0777);
-			AmiiboPath += "/"+ JData["amiibo"][IndexInJdata]["name"].get<std::string>();
-			break;
-*/		}	
+		}	
 
- 		PleaseWait("Please wait, building:\n\n  "+AmiiboPath.substr(20)+"...");
+ 		PleaseWait("Please wait, building:\n\n  "+AmiiboPath.substr(20)+"...");//
 		mkdir(AmiiboPath.c_str(), 0);
 		
         //Write amiibo.json
@@ -300,19 +375,25 @@ void CreatorUI::ListSelect()
         ModelFileWriter << "";
         ModelFileWriter.close();
 		
-		//create icon
+		//create icon vars
 		string iconname = AmiiboPath+"/amiibo.png";
 		string icontemp = AmiiboPath+"/amiibo.temp";
+		string iconDBex = "sdmc:/config/amiigo/IMG/"+JData["amiibo"][IndexInJdata]["image"].get<std::string>();
+		//if exist local used from there
+		if(CheckFileExists(iconDBex)&(fsize(iconDBex) != 0)) copy_me(iconDBex, iconname);
+		//get the icon from online
 		if(!CheckFileExists(iconname)&HasConnection()){
 			RetrieveToFile(JData["url"].get<std::string>()+JData["amiibo"][IndexInJdata]["image"].get<std::string>(), icontemp);
-			if (fsize(icontemp) != 0) rename(icontemp.c_str(), iconname.c_str());
+			if (fsize(icontemp) != 0){
+			copy_me(icontemp, iconDBex);
+			rename(icontemp.c_str(), iconname.c_str());	
+			} 
 		}
+		imgres++;//refresh signal for preview
 	}
 	//Add the Amiibos from the selected series to the list
 	else
 	{
-
-
 		HasSelectedSeries = true;
 		string SelectedSeries = SeriesVec.at(SeriesList->SelectedIndex);
 		SeriesList->ListingTextVec.clear();
@@ -351,30 +432,66 @@ void CreatorUI::DrawHeader()
 	SDL_Rect ImagetRect = {1000, 0 , 260, 70};
 	SDL_RenderCopy(renderer, Headericon , NULL, &ImagetRect);
 	SDL_DestroyTexture(Headericon);
-	
-	std::string StatusText = "";
 
-switch(Creatype)
-{
-	case 0:
-	StatusText = "amiiboName";
-	break;
-	
-	case 1:
-	StatusText = "amiiboSeries";
-	break;
-	
-	case 2:
-	StatusText = "character";
-	break;
-	
-	case 3:
-	StatusText = "gameSeries";
-	break;
-}	
+//status text to build amiibos
+std::string StatusText = "";
+if(HasSelectedSeries){
+	if(CheckButtonPressed(&HeaderRect, TouchX, TouchY))
+	{
+		Creatype++; if(Creatype > 1) {Creatype = 0;}
+	}
 
+	switch(Creatype)
+	{
+		case 0:
+		StatusText = "(amiiboName)";
+		break;
+		
+		case 1:
+				switch(Ordetype)
+				{
+					case 1:
+					StatusText = "amiiboSeries";
+					break;
+					
+					case 2:
+					StatusText = "character";
+					break;
+					
+					case 3:
+					StatusText = "gameSeries";
+					break;
+				}	
+		StatusText = "("+StatusText+")";
+		break;
+	}	
+} else {
+	if(CheckButtonPressed(&HeaderRect, TouchX, TouchY))
+	{
+		Ordetype++; if(Ordetype > 3) {Ordetype = 1;} CreatorUI::Createlist();CreatorUI::InitList();
+	}
+
+	switch(Ordetype)
+	{
+		
+		case 1:
+		StatusText = ">amiiboSeries<";
+		break;
+		
+		case 2:
+		StatusText = ">character<";
+		break;
+		
+		case 3:
+		StatusText = ">gameSeries<";
+		break;
+	}	
+
+}
+
+
+	string headertext = "Amiigo Maker "+StatusText;
 	//Draw the Amiibo path text
-	string headertext = "Amiigo Maker ("+StatusText+")";
 	SDL_Surface* HeaderTextSurface = TTF_RenderUTF8_Blended_Wrapped(HeaderFont, headertext.c_str(), TextColour, *Width);
 	SDL_Texture* HeaderTextTexture = SDL_CreateTextureFromSurface(renderer, HeaderTextSurface);
 	SDL_Rect HeaderTextRect = {(*Width - HeaderTextSurface->w) / 2, (HeaderHeight - HeaderTextSurface->h) / 2, HeaderTextSurface->w, HeaderTextSurface->h};
@@ -464,18 +581,18 @@ void CreatorUI::DrawFooter()
 
 void CreatorUI::PleaseWait(string mensage)
 {
+	SDL_Surface* MessageTextSurface = TTF_RenderUTF8_Blended_Wrapped(HeaderFont, mensage.c_str(), TextColour, *Width);
 	//Draw the rect
 	DrawJsonColorConfig(renderer, "CreatorUI_PleaseWait");
-	SDL_Rect MessageRect = {0,0, *Width, *Height};
+	SDL_Rect MessageRect = {((*Width - MessageTextSurface->w) / 2)-3,((*Height - MessageTextSurface->h) / 2)-3, (MessageTextSurface->w)+3, (MessageTextSurface->h)+3};
 	SDL_RenderFillRect(renderer, &MessageRect);
+
 	//Draw the please wait text
-	SDL_Surface* MessageTextSurface = TTF_RenderUTF8_Blended_Wrapped(HeaderFont, mensage.c_str(), TextColour, *Width);
 	SDL_Texture* MessagerTextTexture = SDL_CreateTextureFromSurface(renderer, MessageTextSurface);
 	SDL_Rect HeaderTextRect = {(*Width - MessageTextSurface->w) / 2, (*Height - MessageTextSurface->h) / 2, MessageTextSurface->w, MessageTextSurface->h};
 	SDL_RenderCopy(renderer, MessagerTextTexture, NULL, &HeaderTextRect);
 	//Clean up
 	SDL_DestroyTexture(MessagerTextTexture);
 	SDL_FreeSurface(MessageTextSurface);
-
 	SDL_RenderPresent(renderer);
 }

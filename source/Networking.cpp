@@ -152,6 +152,7 @@ void APIDownloader()
 	printf("Open Thread\n");
 	printf("Api Downloader\n");
 	mkdir("sdmc:/config/amiigo/", 0);
+	mkdir("sdmc:/config/amiigo/IMG", 0);
 	if(HasConnection())
 	{
 	RetrieveToFile("http://myrincon.duckdns.org/hollow/emupi.php", "sdmc:/config/amiigo/API.temp");

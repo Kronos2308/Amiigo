@@ -144,8 +144,8 @@ first = std::thread(APIDownloader);
 					AmiigoGenUI->CurrentPath = &MainUI->ListDir;
 				}
 				//Render the UI
-				AmiigoGenUI->GetInput();
 				AmiigoGenUI->DrawUI();
+				AmiigoGenUI->GetInput();
 				//If the window state has changed then we need to rescan the amiibo folder to load the new amiibos in to the list
 				if(WindowState == 0)
 				{

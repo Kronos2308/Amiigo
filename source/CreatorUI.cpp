@@ -297,6 +297,7 @@ void CreatorUI::DrawUI()
 		} 
 
 		//draw select amiibo image
+		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 		SDL_Texture* Headericon2 = SDL_CreateTextureFromSurface(renderer, CIcon);
 		int HS = 280, WS = (CIcon->w * (HS * 1000 /CIcon->h) /1000);// printf("print size: %dx%d\n",WS,HS);
 		SDL_Rect ImagetRect2 = {695 + (WS < 260 ? (260 - WS)/2 : 0), 75 , WS > 260 ? 260 : WS, HS};
@@ -429,6 +430,7 @@ void CreatorUI::DrawHeader()
 
 	//draw logo image
 	static SDL_Surface* Alogo = IMG_Load("romfs:/icon_large.png");
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 	SDL_Texture* Headericon = SDL_CreateTextureFromSurface(renderer, Alogo);
 	SDL_Rect ImagetRect = {1000, 0 , 260, 70};
 	SDL_RenderCopy(renderer, Headericon , NULL, &ImagetRect);

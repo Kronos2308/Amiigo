@@ -239,6 +239,7 @@ void AmiigoUI::DrawUI()
 	DrawFooter();
 	
 	//draw amiibo image
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 	SDL_Texture* Headericon = SDL_CreateTextureFromSurface(renderer, AIcon);
 	SDL_Rect ImagetRect = {5, 0 , (AIcon->w * (80 * 100 /AIcon->h) /100),80};// 65  80
 	SDL_RenderCopy(renderer, Headericon , NULL, &ImagetRect);
@@ -284,6 +285,7 @@ void AmiigoUI::DrawUI()
 		if(AmiiboList->IsActive)
 		{
 			//draw select amiibo image
+			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 			SDL_Texture* Headericon2 = SDL_CreateTextureFromSurface(renderer, BIcon);
 			int HS = 280, WS = (BIcon->w * (HS * 1000 /BIcon->h) /1000);// printf("print size: %dx%d\n",WS,HS);
 			SDL_Rect ImagetRect2 = {695 + (WS < 260 ? (260 - WS)/2 : 0), 75 , WS > 260 ? 260 : WS, HS};
@@ -364,6 +366,7 @@ void AmiigoUI::DrawHeader()
 	}
 	//draw logo image
 	static SDL_Surface* Alogo = IMG_Load("romfs:/icon_large.png");
+	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 	SDL_Texture* Headericon = SDL_CreateTextureFromSurface(renderer, Alogo);
 	SDL_Rect ImagetRect = {1000, 0 , 260, 70};
 	SDL_RenderCopy(renderer, Headericon , NULL, &ImagetRect);
@@ -493,6 +496,21 @@ void AmiigoUI::ScanForAmiibos()
 
 void AmiigoUI::PleaseWait(string mensage)
 {
+	SDL_Surface* MessageTextSurface = TTF_RenderUTF8_Blended_Wrapped(HeaderFont, mensage.c_str(), TextColour, *Width);
+	//Draw the rect
+	DrawJsonColorConfig(renderer, "AmiigoUI_PleaseWait");
+	SDL_Rect MessageRect = {((*Width - MessageTextSurface->w) / 2)-3,((*Height - MessageTextSurface->h) / 2)-3, (MessageTextSurface->w)+3, (MessageTextSurface->h)+3};
+	SDL_RenderFillRect(renderer, &MessageRect);
+
+	//Draw the please wait text
+	SDL_Texture* MessagerTextTexture = SDL_CreateTextureFromSurface(renderer, MessageTextSurface);
+	SDL_Rect HeaderTextRect = {(*Width - MessageTextSurface->w) / 2, (*Height - MessageTextSurface->h) / 2, MessageTextSurface->w, MessageTextSurface->h};
+	SDL_RenderCopy(renderer, MessagerTextTexture, NULL, &HeaderTextRect);
+	//Clean up
+	SDL_DestroyTexture(MessagerTextTexture);
+	SDL_FreeSurface(MessageTextSurface);
+	SDL_RenderPresent(renderer);
+/*
 	//Draw the rect
 	DrawJsonColorConfig(renderer, "AmiigoUI_PleaseWait");
 	SDL_Rect MessageRect = {0,0, *Width, *Height};
@@ -504,7 +522,7 @@ void AmiigoUI::PleaseWait(string mensage)
 	SDL_RenderCopy(renderer, MessagerTextTexture, NULL, &HeaderTextRect);
 	//Clean up
 	SDL_DestroyTexture(MessagerTextTexture);
-	SDL_FreeSurface(MessageTextSurface);
+	SDL_FreeSurface(MessageTextSurface);*/
 }
 
 void AmiigoUI::SetAmiibo(int Index)

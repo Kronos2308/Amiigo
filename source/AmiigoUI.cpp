@@ -288,7 +288,7 @@ void AmiigoUI::DrawUI()
 			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 			SDL_Texture* Headericon2 = SDL_CreateTextureFromSurface(renderer, BIcon);
 			int XM = 695,YM = 75, WM = 260, HM = 280,
-			WS = (BIcon->w * (HM * 1000 /BIcon->h) /1000),HS = (BIcon->h * (HM * 1000 /BIcon->w) /1000),
+			WS = (BIcon->w * (HM * 1000 /BIcon->h) /1000),HS = (BIcon->h * (WM * 1000 /BIcon->w) /1000),
 			WT = WS > WM ? WM : WS,HT = WS > WM ? HS : HM,
 			XT = XM + (WS < WM ? (WM - WS)/2 : 0),YT = YM + (WS > WM ? (HM - HS) : 0);// printf("print size: %dx%d\n",WS,HM);
 			SDL_Rect ImagetRect2 = {XT, YT, WT, HT};

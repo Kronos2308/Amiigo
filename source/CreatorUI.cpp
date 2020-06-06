@@ -300,7 +300,7 @@ void CreatorUI::DrawUI()
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 		SDL_Texture* Headericon2 = SDL_CreateTextureFromSurface(renderer, CIcon);
 		int XM = 695,YM = 75, WM = 260, HM = 280,
-		WS = (CIcon->w * (HM * 1000 /CIcon->h) /1000),HS = (CIcon->h * (HM * 1000 /CIcon->w) /1000),
+		WS = (CIcon->w * (HM * 1000 /CIcon->h) /1000),HS = (CIcon->h * (WM * 1000 /CIcon->w) /1000),
 		WT = WS > WM ? WM : WS,HT = WS > WM ? HS : HM,
 		XT = XM + (WS < WM ? (WM - WS)/2 : 0),YT = YM + (WS > WM ? (HM - HS) : 0);// printf("print size: %dx%d\n",WS,HM);
 		SDL_Rect ImagetRect2 = {XT, YT, WT, HT};

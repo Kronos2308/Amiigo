@@ -299,8 +299,11 @@ void CreatorUI::DrawUI()
 		//draw select amiibo image
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
 		SDL_Texture* Headericon2 = SDL_CreateTextureFromSurface(renderer, CIcon);
-		int HS = 280, WS = (CIcon->w * (HS * 1000 /CIcon->h) /1000);// printf("print size: %dx%d\n",WS,HS);
-		SDL_Rect ImagetRect2 = {695 + (WS < 260 ? (260 - WS)/2 : 0), 75 , WS > 260 ? 260 : WS, HS};
+		int XM = 695,YM = 75, WM = 260, HM = 280,
+		WS = (CIcon->w * (HM * 1000 /CIcon->h) /1000),HS = (CIcon->h * (HM * 1000 /CIcon->w) /1000),
+		WT = WS > WM ? WM : WS,HT = WS > WM ? HS : HM,
+		XT = XM + (WS < WM ? (WM - WS)/2 : 0),YT = YM + (WS > WM ? (HM - HS) : 0);// printf("print size: %dx%d\n",WS,HM);
+		SDL_Rect ImagetRect2 = {XT, YT, WT, HT};
 		SDL_RenderCopy(renderer, Headericon2 , NULL, &ImagetRect2);
 		SDL_DestroyTexture(Headericon2);
 	} else imgres = 20; //reload image if go back

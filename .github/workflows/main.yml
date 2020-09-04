@@ -1,25 +1,18 @@
-
-name: Build Amiigo
+name: Build Homebrew
 
 on: [push]
 jobs:
   build:
 
     runs-on: ubuntu-latest
-
+    container: devkitpro/devkita64_devkitarm
     steps:
     - uses: actions/checkout@v1
     - name: Update repo.
       run: |
         git submodule update --init --recursive
         
-    - name: Install devkitpro
-      run: |
-        wget https://github.com/devkitPro/pacman/releases/download/devkitpro-pacman-1.0.1/devkitpro-pacman.deb
-        sudo dpkg -i devkitpro-pacman.deb
-        sudo dkp-pacman -S $(dkp-pacman -Ssq switch-*) --noconfirm
-        
-    - name: Make Amiigo
+    - name: Make app
       run: |
         echo ##########################
         echo #     SETTING PATH       #
@@ -33,5 +26,5 @@ jobs:
         
     - uses: actions/upload-artifact@master
       with:
-        name: Amiigo
+        name: Build
         path: Amiigo.nro

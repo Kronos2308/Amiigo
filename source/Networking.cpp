@@ -157,8 +157,15 @@ void APIDownloader()
 	{
 	RetrieveToFile("http://myrincon.duckdns.org/hollow/emupi.php", "sdmc:/config/amiigo/API.temp");
 		if(CheckFileExists("sdmc:/config/amiigo/API.temp")&(fsize("sdmc:/config/amiigo/API.temp") != 0)){
-		remove("sdmc:/config/amiigo/API.json");
-		rename("sdmc:/config/amiigo/API.temp", "sdmc:/config/amiigo/API.json");
+			string AmiiboAPIString = "";
+			ifstream DataFileReader("sdmc:/config/amiigo/API.temp");
+			getline(DataFileReader, AmiiboAPIString);
+			DataFileReader.close();		
+			if(json::accept(AmiiboAPIString))//check if download is a valid json
+			{
+				remove("sdmc:/config/amiigo/API.json");
+				rename("sdmc:/config/amiigo/API.temp", "sdmc:/config/amiigo/API.json");
+			} else {printf("API.temp invalid\n");}
 		}
 	}
 

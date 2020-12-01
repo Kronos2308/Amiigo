@@ -20,6 +20,10 @@ int Ordetype = 1;
 int Creatype = 0;
 int DownPrev = 0;
 int imgres = 20;
+int indexb1 = 0;
+int indexb2 = 0;
+int indexb3 = 0;
+string List = "amiiboSeries";
 
 class AmiiboVars
 {
@@ -90,7 +94,7 @@ void CreatorUI::Createlist()
 {
 	AmiiboVarsVec.clear();
 	SeriesVec.clear();
-	string List = "amiiboSeries";
+	List = "amiiboSeries";
 	switch(Ordetype)
 	{
 		case 1:
@@ -153,7 +157,7 @@ void CreatorUI::GetInput()
 	//Scan input
 	while (SDL_PollEvent(Event))
 		{
-			//printf("Button-ID-%d-\n",Event->jbutton.button);
+			printf("Button-ID-%d-\n",Event->jbutton.button);
             switch (Event->type)
 			{
 				//Touchscreen
@@ -217,6 +221,9 @@ void CreatorUI::GetInput()
 						{
 							if(SeriesList->IsActive)
 							{
+								indexb1 = SeriesList->SelectedIndex;
+								indexb2 = SeriesList->CursorIndex;
+								indexb3 = SeriesList->ListRenderOffset;
 								ListSelect();
 							}
 							else
@@ -229,16 +236,29 @@ void CreatorUI::GetInput()
 						{
 							//Reset some vars so we don't crash
 							SeriesList->ListingTextVec = SeriesVec;
-							SeriesList->SelectedIndex = 0;
-							SeriesList->CursorIndex = 0;
-							SeriesList->ListRenderOffset = 0;
+							SeriesList->SelectedIndex = indexb1 ;
+							SeriesList->CursorIndex = indexb2;
+							SeriesList->ListRenderOffset = indexb3;
 							HasSelectedSeries = false;
 						}else if(Event->jbutton.button == 11)
 						{
 							if(HasSelectedSeries){Creatype++; if(Creatype > 1) {Creatype = 0;}}
 							else
-							{Ordetype++; if(Ordetype > 3) {Ordetype = 1;} CreatorUI::Createlist();CreatorUI::InitList();}
+							{//change series
+								SeriesList->SelectedIndex = 0;
+								SeriesList->CursorIndex = 0;
+								SeriesList->ListRenderOffset = 0;
+								Ordetype++;
+								if(Ordetype > 3) {Ordetype = 1;}
+								CreatorUI::Createlist();
+								CreatorUI::InitList();
+							}
+						}else if(Event->jbutton.button == 8){
+							MenuList->IsActive = false;
+							SeriesList->IsActive = true;
+							*WindowState = 0;
 						}
+						
 
                     }
                     break;
@@ -293,7 +313,7 @@ void CreatorUI::DrawUI()
 		{
 			imgres = SeriesList->SelectedIndex;
 			if(CheckFileExists(ImgPath)&(fsize(ImgPath) != 0)) CIcon = IMG_Load(ImgPath.c_str()); else CIcon = IMG_Load("romfs:/download.png");	
-			printf("%s\n",ImgPath.c_str());
+			//printf("%s\n",ImgPath.c_str());
 		} 
 
 		//draw select amiibo image
@@ -307,6 +327,8 @@ void CreatorUI::DrawUI()
 		SDL_RenderCopy(renderer, Headericon2 , NULL, &ImagetRect2);
 		SDL_DestroyTexture(Headericon2);
 	} else imgres = 20; //reload image if go back
+
+	//printf("%d - %d\n",SeriesList->SelectedIndex, SeriesList->CursorIndex);
 
 	DrawButtonBorders(renderer, SeriesList, MenuList, HeaderHeight, FooterHeight, *Width, *Height, true);
 	//Check if list item selected via touch screen
@@ -341,7 +363,6 @@ void CreatorUI::ListSelect()
 			break;
 			
 			case 1:
-				string List = "amiiboSeries";
 				switch(Ordetype)
 				{
 					case 1:
@@ -450,25 +471,12 @@ if(HasSelectedSeries){
 	switch(Creatype)
 	{
 		case 0:
-		StatusText = "(amiiboName)";
+		StatusText = "-> ./";
 		break;
 		
 		case 1:
-				switch(Ordetype)
-				{
-					case 1:
-					StatusText = "amiiboSeries";
-					break;
-					
-					case 2:
-					StatusText = "character";
-					break;
-					
-					case 3:
-					StatusText = "gameSeries";
-					break;
-				}	
-		StatusText = "("+StatusText+")";
+		StatusText = "-> "+JData["amiibo"][SortedAmiiboVarsVec.at(SeriesList->SelectedIndex).ListIndex][List].get<std::string>()+"/";
+		//StatusText = "("+StatusText+")";
 		break;
 	}	
 } else {
@@ -481,15 +489,15 @@ if(HasSelectedSeries){
 	{
 		
 		case 1:
-		StatusText = ">amiiboSeries<";
+		StatusText = "[AmiiboSeries]";
 		break;
 		
 		case 2:
-		StatusText = ">character<";
+		StatusText = "[Character]";
 		break;
 		
 		case 3:
-		StatusText = ">gameSeries<";
+		StatusText = "[GameSeries]";
 		break;
 	}	
 
@@ -500,7 +508,7 @@ if(HasSelectedSeries){
 	//Draw the Amiibo path text
 	SDL_Surface* HeaderTextSurface = TTF_RenderUTF8_Blended_Wrapped(HeaderFont, headertext.c_str(), TextColour, *Width);
 	SDL_Texture* HeaderTextTexture = SDL_CreateTextureFromSurface(renderer, HeaderTextSurface);
-	SDL_Rect HeaderTextRect = {(*Width - HeaderTextSurface->w) / 2, (HeaderHeight - HeaderTextSurface->h) / 2, HeaderTextSurface->w, HeaderTextSurface->h};
+	SDL_Rect HeaderTextRect = {/*(*Width - HeaderTextSurface->w) / 2 - 90*/30, (HeaderHeight - HeaderTextSurface->h) / 2, HeaderTextSurface->w, HeaderTextSurface->h};
 	SDL_RenderCopy(renderer, HeaderTextTexture, NULL, &HeaderTextRect);
 	//Clean up
 	SDL_DestroyTexture(HeaderTextTexture);
@@ -567,9 +575,9 @@ void CreatorUI::DrawFooter()
 	{
 		//Reset some vars so we don't crash
 		SeriesList->ListingTextVec = SeriesVec;
-		SeriesList->SelectedIndex = 0;
-		SeriesList->CursorIndex = 0;
-		SeriesList->ListRenderOffset = 0;
+		SeriesList->SelectedIndex = indexb1 ;
+		SeriesList->CursorIndex = indexb2;
+		SeriesList->ListRenderOffset = indexb3;
 		HasSelectedSeries = false;
 	}
 	
@@ -588,10 +596,14 @@ void CreatorUI::DrawFooter()
 void CreatorUI::PleaseWait(string mensage)
 {
 	SDL_Surface* MessageTextSurface = TTF_RenderUTF8_Blended_Wrapped(HeaderFont, mensage.c_str(), TextColour, *Width);
-	//Draw the rect
-	DrawJsonColorConfig(renderer, "CreatorUI_PleaseWait");
-	SDL_Rect MessageRect = {((*Width - MessageTextSurface->w) / 2)-3,((*Height - MessageTextSurface->h) / 2)-3, (MessageTextSurface->w)+3, (MessageTextSurface->h)+3};
+	//Draw the rect and border
+	SDL_SetRenderDrawColor(renderer,0 ,0 ,0 ,255);
+	SDL_Rect MessageRect = {((*Width - MessageTextSurface->w) / 2)-5,((*Height - MessageTextSurface->h) / 2)-5, (MessageTextSurface->w)+7, (MessageTextSurface->h)+7};
 	SDL_RenderFillRect(renderer, &MessageRect);
+	DrawJsonColorConfig(renderer, "CreatorUI_PleaseWait");
+	MessageRect = {((*Width - MessageTextSurface->w) / 2)-3,((*Height - MessageTextSurface->h) / 2)-3, (MessageTextSurface->w)+3, (MessageTextSurface->h)+3};
+	SDL_RenderFillRect(renderer, &MessageRect);
+
 
 	//Draw the please wait text
 	SDL_Texture* MessagerTextTexture = SDL_CreateTextureFromSurface(renderer, MessageTextSurface);

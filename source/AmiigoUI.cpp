@@ -66,6 +66,7 @@ AmiigoUI::AmiigoUI()
 	MenuList->ListingTextVec.push_back("Amiigo Maker");
 	MenuList->ListingTextVec.push_back("Check for updates");
 	MenuList->ListingTextVec.push_back("Exit");
+//	MenuList->ListingTextVec.push_back("Settings"); //ToDo
 	//Scan the Amiibo folder for Amiibos
 	ScanForAmiibos();
 }
@@ -187,8 +188,8 @@ void AmiigoUI::GetInput()
 							ListDir = GoUpDir(ListDir);
 							ScanForAmiibos();
 						}
-						//Left stick or minus pressed
-						else if(Event->jbutton.button == 4|| Event->jbutton.button == 11)
+						//Left stick delete
+						else if(Event->jbutton.button == 4) /*|| Event->jbutton.button == 11 or minus pressed*/
 						{
 							//reset sel img
 							ImgSel = AmiiboList->SelectedIndex+3;
@@ -201,6 +202,10 @@ void AmiigoUI::GetInput()
 							fsdevDeleteDirectoryRecursively(PathToAmiibo);
 							ScanForAmiibos();
 							}
+						}else if(Event->jbutton.button == 9){
+							MenuList->IsActive = false;
+							AmiiboList->IsActive = true;
+							*WindowState = 1;
 						}
                    }
                     break;

@@ -123,7 +123,7 @@ std::string refill(std::string data,u64 espect){
 }
 
 
-// id converter by Cl0ckSciOrBust
+// id converter by CompSciOrBust
 std::string shiftAndHex(std::string input)
 {
     unsigned short value = std::stoi(input);

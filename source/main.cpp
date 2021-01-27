@@ -10,16 +10,20 @@
 #include <AmiigoUI.h>
 #include <CreatorUI.h>
 #include <UpdaterUI.h>
-#include <nfpemu.h>
+#include <emuiibo.hpp>
 #include <thread>
 #include <Utils.h>
 int destroyer = 0;
+bool g_emuiibo_init_ok = false;
 int main(int argc, char *argv[])
 {
+romfsInit();
 socketInitializeDefault();
 //debug nxlink
-nxlinkStdio(); 
-printf("printf output now goes to nxlink server\n");
+#ifdef DEBUG
+    nxlinkStdio();
+    printf("printf output now goes to nxlink server\n");
+#endif
 std::thread  first;
 first = std::thread(APIDownloader);
 //std::thread second = std::thread(IconDownloader);
@@ -70,9 +74,10 @@ first = std::thread(APIDownloader);
     }
 
 	TTF_Init(); //Init the font
-	plInitialize(); //Init needed for shared font
-	if (nfpemuIsAccessible())
-	nfpemuInitialize(); //Init nfp ipc
+	plInitialize(PlServiceType_User); //Init needed for shared font
+	if (emu::IsAvailable())
+//	nfpemuInitialize(); //Init nfp ipc
+	g_emuiibo_init_ok = R_SUCCEEDED(emu::Initialize());//same
 	
 	//Give MainUI access to vars
 	AmiigoUI *MainUI = new AmiigoUI();
@@ -104,10 +109,18 @@ first = std::thread(APIDownloader);
 				MainUI->GetInput();
 				MainUI->DrawUI();
 				//If the user has switched to the maker UI and the data isn't read show the please wait message
-				if((AmiigoGenUI == NULL) & (WindowState == 1) & (!CheckFileExists("sdmc:/config/amiigo/API.json")))
+				if ((AmiigoGenUI == NULL) & (WindowState == 1))
 				{
-					//Display the please wait message
-					MainUI->PleaseWait("Please wait while we get data from the Amiibo API...");
+					if (!CheckFileExists("sdmc:/config/amiigo/API.json")&(HasConnection()))
+					{
+						//Display the please wait message
+						MainUI->PleaseWait("Please wait while we get data from the Amiibo API...");
+						SDL_RenderPresent(renderer);
+						SDL_Delay(2000);
+						//go back if Api isn't ready
+						if (!CheckFileExists("sdmc:/config/amiigo/API.json"))
+						WindowState = 0;
+					}
 				}
 			}
 			break;
@@ -131,8 +144,8 @@ first = std::thread(APIDownloader);
 					AmiigoGenUI->CurrentPath = &MainUI->ListDir;
 				}
 				//Render the UI
-				AmiigoGenUI->GetInput();
 				AmiigoGenUI->DrawUI();
+				AmiigoGenUI->GetInput();
 				//If the window state has changed then we need to rescan the amiibo folder to load the new amiibos in to the list
 				if(WindowState == 0)
 				{
@@ -158,6 +171,15 @@ first = std::thread(APIDownloader);
 				UpUI->DrawUI();
 			}
 			break;
+			//Draw the Amiigo Config
+			case 4:
+			{//ToDo
+				MainUI->PleaseWait("Config Here...");
+				SDL_RenderPresent(renderer);
+				SDL_Delay(3000);
+				WindowState = 0;
+			}
+			break;
 		}
 		
 		//If exit option was selected we need to set done to 1
@@ -165,6 +187,7 @@ first = std::thread(APIDownloader);
 
 		//Draw the frame
         SDL_RenderPresent(renderer);
+		SDL_Delay(50);
 		
 		//automatic join after finish	
 		if ((first.joinable())&(destroyer == 1))
@@ -180,13 +203,13 @@ first = std::thread(APIDownloader);
 		first.join();
 	}
 
+	romfsExit();
+	emu::Exit();
 	socketExit();
 	nifmExit();
 	plExit();
-	nfpemuExit();
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
     SDL_Quit();
-	
     return 0;
 }

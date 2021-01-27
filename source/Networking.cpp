@@ -29,7 +29,7 @@ std::size_t CurlFileWrite(const char* in, std::size_t size, std::size_t num, FIL
 
 std::string RetrieveContent(std::string URL, std::string MIMEType)
 {
-    std::string cnt;
+   std::string cnt;
     CURL *curl = curl_easy_init();
     if(!MIMEType.empty())
     {
@@ -40,34 +40,43 @@ std::string RetrieveContent(std::string URL, std::string MIMEType)
     }
     curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
 	curl_easy_setopt(curl, CURLOPT_USERAGENT, "Amiigo"); //Turns out this was important and I should not have deleted it
+	curl_easy_setopt(curl, CURLOPT_CAINFO, "romfs:/certificate.pem");
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
     curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
     curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
     curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlStrWrite);
     curl_easy_setopt(curl, CURLOPT_WRITEDATA, &cnt);
-    curl_easy_perform(curl);
+    CURLcode res = curl_easy_perform(curl);	if (res != CURLE_OK) printf("\n%s\n",curl_easy_strerror(res));
     curl_easy_cleanup(curl);
     return cnt;
 }
 
 void RetrieveToFile(std::string URL, std::string Path)
 {
-    FILE *f = fopen(Path.c_str(), "wb");
-    if(f)
-    {
-        CURL *curl = curl_easy_init();
-        curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
-        curl_easy_setopt(curl, CURLOPT_USERAGENT, "Amiigo");
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
-        curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
-        curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-        curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlFileWrite);
-        curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
-        curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
-        curl_easy_perform(curl);
-        curl_easy_cleanup(curl);
-    }
-    fclose(f);
+	CURLcode res = CURLE_OK;
+	curl_global_init(CURL_GLOBAL_DEFAULT);
+	CURL *curl = curl_easy_init();
+	if (curl) {
+		FILE *f = fopen(Path.c_str(), "wb");
+		if(f)
+		{
+			curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
+			curl_easy_setopt(curl, CURLOPT_USERAGENT, "Amiigo");
+			curl_easy_setopt(curl, CURLOPT_CAINFO, "romfs:/certificate.pem");
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
+			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
+			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
+			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlFileWrite);
+			curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
+			curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
+			res = curl_easy_perform(curl);
+			curl_easy_cleanup(curl);
+		}
+	fclose(f);
+	}else{
+        res = CURLE_HTTP_RETURNED_ERROR;			
+	}
+	if (res != CURLE_OK) printf("\n%s\n%s\n%s\n",curl_easy_strerror(res),URL.c_str(),Path.c_str());
 }
 
 //I made this so even though it's only one two calls it's probably janky.
@@ -97,103 +106,91 @@ void Scandownload(string folder)
 		if (destroyer != 0) break;
 		string route = ent->d_name;
 		//Check if Amiibo or empty folder
-		if(CheckFileExists(folder+"/"+route+"/model.json"))
+		if(CheckFileExists(folder+"/"+route+"/amiibo.json"))
 		{
-			//get amiibo id
-			string AmiiboID;
-			string IDContents;
-			json JEData;
-			ifstream IDReader(folder+"/"+route+"/model.json");
+			string imageI = folder+"/"+route+"/amiibo.png";
+			string imageF = folder+"/"+route+"/amiibo_cache.png";
+			if(!CheckFileExists(imageI))
+			{
+				//get id
+				string APIContents;
+				json APIJSData;
+				ifstream IDReader(folder+"/"+route+"/amiibo.json");
 				//Read each line
 				for(int i = 0; !IDReader.eof(); i++)
 				{
 					string TempLine = "";
 					getline(IDReader, TempLine);
-					IDContents += TempLine;
+					APIContents += TempLine;
 				}
-			IDReader.close();
-			if(json::accept(IDContents))
-			{
-				JEData = json::parse(IDContents);
-				AmiiboID = JEData["amiiboId"].get<std::string>();
-				std::transform(AmiiboID.begin(),AmiiboID.end(),AmiiboID.begin(),::tolower);
-			}
+			
+				IDReader.close();
+				if(json::accept(APIContents))
+				{
+					APIJSData = json::parse(APIContents);
+				}else
+					return; //amiibo file is poison
 					
-			string imageI = "sdmc:/config/amiigo/IMG/"+AmiiboID+".png";
-			string imageF = "sdmc:/config/amiigo/IMG/Cache/"+AmiiboID+".png";
-			if(!CheckFileExists(imageI))
-			{//download icon	
-				string url = "https://raw.githubusercontent.com/N3evin/AmiiboAPI/master/images/icon_"+ AmiiboID.substr(0,8)+"-"+AmiiboID.substr(8,8) +".png";
-				printf("%s - Downloading %s\nTo %s\n",route.c_str(),url.c_str(),imageI.c_str());
-				RetrieveToFile(url, imageF);
-				rename(imageF.c_str(), imageI.c_str());
-				printf("Downloaded \n");
-			}else printf("The icon exist %s.png %s OK\n",AmiiboID.c_str(),route.c_str());
+				printf("Missing image %s \n",imageI.c_str());
+				string AMID = toamii(APIJSData["id"]);
+				string iconDBex = "sdmc:/config/amiigo/IMG/icon_"+AMID.substr(0,8)+"-"+AMID.substr(8,16)+".png";
+				//if exist local used from there
+				if(CheckFileExists(iconDBex)&(fsize(iconDBex) != 0)){
+					printf("%s - Copy %s\nTo %s\n",route.c_str(),iconDBex.c_str(),imageI.c_str());
+					copy_me(iconDBex, imageI);
+					printf("Local used \n");
+				} else if (HasConnection()){
+					string url = "https://raw.githubusercontent.com/N3evin/AmiiboAPI/master/images/icon_"+AMID.substr(0,8)+"-"+AMID.substr(8,16)+".png";
+					printf("%s - Downloading %s\nTo %s\n",route.c_str(),url.c_str(),imageI.c_str());
+					RetrieveToFile(url, imageF);
+					if (fsize(imageF) != 0)
+					rename(imageF.c_str(), imageI.c_str());
+					copy_me(imageI, iconDBex);
+					printf("Downloaded \n");
+				}
+			}//else printf("The icon exist %s OK\n",route.c_str());
 		}
 		else 
 		{
+			if(!CheckFileExists(folder+"/"+route+"/amiibo.json"))
 			Scandownload(folder+"/"+route);
 		}
-
 	}
 }
 
 void APIDownloader()
 {
-	printf("Open Thread\n");
-	printf("Api Downloader\n");
-	mkdir("sdmc:/config/amiigo/", 0);
-	if(HasConnection())
-	RetrieveToFile("https://www.amiiboapi.com/api/amiibo", "sdmc:/config/amiigo/API-D.json");
-	if(CheckFileExists("sdmc:/config/amiigo/API-D.json"))
-	rename("sdmc:/config/amiigo/API.json", "sdmc:/config/amiigo/API-old.json");
-	rename("sdmc:/config/amiigo/API-D.json", "sdmc:/config/amiigo/API.json");
-	remove("sdmc:/config/amiigo/API-old.json");
-	remove("sdmc:/config/amiigo/API-D.json");
-
-	//download amiibo icons
-	mkdir("sdmc:/config/amiigo/IMG/", 0);
-	mkdir("sdmc:/config/amiigo/IMG/Cache/", 0);
-	printf("Icon downloader\n");
-	Scandownload("sdmc:/emuiibo/amiibo");
+	printf("Open network Thread\n");
+	mkdir("sdmc:/config/amiigo/", 1);
+	mkdir("sdmc:/config/amiigo/IMG", 1);
 	
-/*	//download full data base
-		ifstream DataFileReader("sdmc:/config/amiigo/API.json");
-		string AmiiboAPIString;
-		getline(DataFileReader, AmiiboAPIString);
-		DataFileReader.close();		
-	if(json::accept(AmiiboAPIString))
+	printf("Api Downloader\n");
+	if(HasConnection())//Download Api
 	{
-		//Parse and use the JSON data
-		json JData;
-		int JDataSize = 0;
-		JData = json::parse(AmiiboAPIString);
-		JDataSize = JData["amiibo"].size();
-		
-		//Get all of the Series' names and add Amiibos to the AmiiboVarsVec
-		for(int i = 0; i < JDataSize; i++)
+	RetrieveToFile("https://www.amiiboapi.com/api/amiibo/", "sdmc:/config/amiigo/API.temp");
+		if(CheckFileExists("sdmc:/config/amiigo/API.temp")&(fsize("sdmc:/config/amiigo/API.temp") != 0))
 		{
-			if (destroyer != 0) break;
-			string amiiboicon = JData["amiibo"][i]["image"].get<std::string>();
-			string amiiID = "sdmc:/config/amiigo/IMG/"+JData["amiibo"][i]["head"].get<std::string>()+JData["amiibo"][i]["tail"].get<std::string>()+".png";
-			string amiifail = "sdmc:/config/amiigo/IMG/Cache/"+JData["amiibo"][i]["head"].get<std::string>()+JData["amiibo"][i]["tail"].get<std::string>()+".png";
-			
-			if((CheckFileExists(amiiID))&(fsize(amiiID) == 0))
-			remove(amiiID.c_str());
-		
-			if(!CheckFileExists(amiiID))
+			string AmiiboAPIString = "";
+			ifstream DataFileReader("sdmc:/config/amiigo/API.temp");
+			for(int f = 0; !DataFileReader.eof(); f++)
 			{
-				RetrieveToFile(amiiboicon, amiifail);
-				rename(amiifail.c_str(), amiiID.c_str());
+				string TempLine = "";
+				getline(DataFileReader, TempLine);
+				AmiiboAPIString += TempLine;
 			}
+			DataFileReader.close();			
+			if(json::accept(AmiiboAPIString))//check if download is a valid json
+			{
+				remove("sdmc:/config/amiigo/API.json");
+				rename("sdmc:/config/amiigo/API.temp", "sdmc:/config/amiigo/API.json");
+			} else {printf("API.temp invalid\n");}
 		}
 	}
-*/
+
+	//Download amiibo icons
+	printf("Icon Downloader\n");
+	Scandownload("sdmc:/emuiibo/amiibo");
+	
 printf("Close Thread\n");
 destroyer = 1;
-}
-
-void IconDownloader()
-{
-	
 }

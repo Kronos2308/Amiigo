@@ -9,14 +9,14 @@
     "UI_borders_list_B": "0",
     "UI_borders_list_A": "255",
 
-    "UI_background_R": "136",
-    "UI_background_G": "254",
-    "UI_background_B": "254",
+    "UI_background_R": "200",
+    "UI_background_G": "200",
+    "UI_background_B": "200",
     "UI_background_A": "255",
 
-    "UI_background_alt_R": "0",
-    "UI_background_alt_G": "178",
-    "UI_background_alt_B": "212",
+    "UI_background_alt_R": "150",
+    "UI_background_alt_G": "150",
+    "UI_background_alt_B": "150",
     "UI_background_alt_A": "255",
 
     "UI_cursor_R": "255",
@@ -64,9 +64,9 @@
     "AmiigoUI_DrawFooter_D_B": "0",
     "AmiigoUI_DrawFooter_D_A": "255",
 	
-    "CreatorUI_DrawHeader_R": "0",
-    "CreatorUI_DrawHeader_G": "188",
-    "CreatorUI_DrawHeader_B": "212",
+    "CreatorUI_DrawHeader_R": "200",
+    "CreatorUI_DrawHeader_G": "200",
+    "CreatorUI_DrawHeader_B": "200",
     "CreatorUI_DrawHeader_A": "255",
 	
     "CreatorUI_DrawFooter_Select_R": "0",
@@ -84,9 +84,9 @@
     "CreatorUI_PleaseWait_B": "212",
     "CreatorUI_PleaseWait_A": "255",
 	
-    "CreatorUI_DrawUI_R": "94",
-    "CreatorUI_DrawUI_G": "94",
-    "CreatorUI_DrawUI_B": "94",
+    "CreatorUI_DrawUI_R": "25",
+    "CreatorUI_DrawUI_G": "25",
+    "CreatorUI_DrawUI_B": "25",
     "CreatorUI_DrawUI_A": "255",
 	
     "UpdaterUI_DrawText_R": "0",

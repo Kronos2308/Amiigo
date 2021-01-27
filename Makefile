@@ -42,10 +42,10 @@ BUILD		:=	build
 SOURCES		:=	source
 DATA		:=	data
 INCLUDES	:=	include
-#ROMFS	:=	romfs
+ROMFS	:=	romfs
 APP_TITLE := Amiigo
-APP_AUTHOR := CompSciOrBust
-APP_VERSION := 1.6.0
+APP_AUTHOR := Kronos2308 Fork of CompSciOrBust
+APP_VERSION := 1.6.7
 
 #---------------------------------------------------------------------------------
 # options for code generation
@@ -56,6 +56,9 @@ CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 			$(ARCH) $(DEFINES)
 
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DVERSION='"$(APP_VERSION)"' -DTITLE='"$(APP_TITLE)"' `sdl2-config --cflags`
+ifneq ($(strip $(DEBUG)),)
+CFLAGS	+= -DDEBUG
+endif
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions
 

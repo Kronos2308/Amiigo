@@ -45,7 +45,7 @@ void ScrollList::DrawList()
 	ItemSelected = false;
 	int ListingHeight = ListHeight / ListingsOnScreen;
 	int ListLength = ListingsOnScreen;
-	if(ListLength > ListingTextVec.size()) ListLength = ListingTextVec.size();
+	if(ListLength > (int)ListingTextVec.size()) ListLength = ListingTextVec.size();
 	
 	//Check cursor is with in bounds
 	if(CursorIndex > ListLength-1)
@@ -73,7 +73,7 @@ void ScrollList::DrawList()
 			ListRenderOffset = 0;
 		}
 	}
-	else if(SelectedIndex > ListingTextVec.size()-1)
+	else if(SelectedIndex > (int)ListingTextVec.size()-1)
 	{
 		SelectedIndex = 0;
 		CursorIndex = 0;

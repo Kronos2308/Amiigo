@@ -79,13 +79,13 @@ void UpdaterUI::DrawUI()
 			//Check we have a connection before trying to access the network
 			if(HasConnection())
 			{
-				NewVersion = CheckForNewVersion();
 				UpdateState++;
+				NewVersion = CheckForNewVersion();
 			}
 			else
 			{
 				UpdateText = "Waiting for connection.";
-				if(BPressed)
+				if(BPressed||CheckButtonPressed(&BackFooterRect, TouchX, TouchY))
 				{
 					*WindowState = 0;
 				}
@@ -113,18 +113,30 @@ void UpdaterUI::DrawUI()
 		//Download update stage
 		case 2:
 		{
-			string UpdateFileURL = "https://github.com/CompSciOrBust/Amiigo/releases/download/" + LatestID + "/Amiigo.nro";
+			//change download path
+			if(CheckFileExists("sdmc:/switch/Amiigo/Amiigo.nro"))
+			NROPath = "sdmc:/switch/Amiigo/Amiigo.nro";
+			
+			string UpdateFileURL = "https://github.com/StarDustCFW/Amiigo/releases/download/" + LatestID + "/Amiigo.nro";
 			RetrieveToFile(UpdateFileURL, "sdmc:/switch/Failed_Amiigo_Update.nro");
+			romfsExit();
 			remove(NROPath.c_str());
 			rename("sdmc:/switch/Failed_Amiigo_Update.nro", NROPath.c_str());
 			*IsDone = 1;
 		}
 		break;
+		case 3:
+			UpdateText = "Net Error! Bad Json Syntax";
+			if(BPressed||CheckButtonPressed(&BackFooterRect, TouchX, TouchY))
+			{
+				*WindowState = 0;
+			}
+		break;
 		//Somethign went wrong. User should not normally end up here.
 		case 999:
 		{
 			UpdateText = "Error! Is GitHub rate limiting you?";
-			if(BPressed)
+			if(BPressed||CheckButtonPressed(&BackFooterRect, TouchX, TouchY))
 			{
 				*WindowState = 0;
 			}
@@ -137,19 +149,24 @@ void UpdaterUI::DrawUI()
 bool UpdaterUI::CheckForNewVersion()
 {
 	//Get data from GitHub API
-	string Data = RetrieveContent("https://api.github.com/repos/CompSciOrBust/Amiigo/releases", "application/json");
-	//Get the release tag string from the data
-	GitAPIData = json::parse(Data);
-	//Check if GitAPI gave us a release tag otherwise we'll crash
-	if(Data.length() < 300)
-	{
-		//User is probably rate limited.
-		UpdateState = 999;
+	string Data = RetrieveContent("https://api.github.com/repos/StarDustCFW/Amiigo/releases", "application/json");
+	if(json::accept(Data)){
+		//Get the release tag string from the data
+		GitAPIData = json::parse(Data);
+		//Check if GitAPI gave us a release tag otherwise we'll crash
+		if(Data.length() < 300)
+		{
+			//User is probably rate limited.
+			UpdateState = 999;
+			return false;
+		}
+		LatestID = GitAPIData[0]["tag_name"].get<std::string>();
+		//Check if we're running the latest version
+		return (LatestID != VERSION);
+	} else {
+		UpdateState = 3;
 		return false;
 	}
-    LatestID = GitAPIData[0]["tag_name"].get<std::string>();
-	//Check if we're running the latest version
-	return (LatestID != VERSION);
 }
 
 void UpdaterUI::DrawText(std::string Message)

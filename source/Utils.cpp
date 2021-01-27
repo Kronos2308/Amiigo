@@ -6,13 +6,12 @@
 #include <SDL.h>
 #include <SDL2/SDL_ttf.h>
 #include <stdlib.h>
-#include "nlohmann/json.hpp"
 #include <switch.h>
 #include <vector>
 #include <stdio.h>
 #include <chrono>
 #include "Utils.h"
-using json = nlohmann::json;
+#include "ConvertBase.hpp"
 string IDContents;
 json JEData;
 
@@ -127,4 +126,62 @@ void DrawJsonColorConfig(SDL_Renderer* renderer, string Head)
 		if(Head == "UpdaterUI_DrawText") SDL_SetRenderDrawColor(renderer, 0, 188, 212, 255);
 		if (IDContents.size() != 0) IDContents = "";//reset json var
 	}
+}
+
+//tryng to tranlate the emuiibo id from amiibo id, WIP
+json toemu(std::string ID){
+	json JSID;
+/*	
+    printf("hex val: %s\n", ID.substr(0,4).c_str());
+    std::string converted = shiftAndDec(ID.substr(0,4));
+    printf("Number: %s\n", converted.c_str());
+	
+    std::string uconverted = shiftAndHex(converted);
+//	transform(uconverted.begin(), uconverted.end(), uconverted.begin(), ::tolower);
+    printf("get back: %s\n", uconverted.c_str());
+*/
+	printf("AmiiboID: %s \n",ID.c_str());
+
+	JSID["game_character_id"] = std::stoi( shiftAndDec( ID.substr(0,4) ) );
+	JSID["character_variant"] = std::stoi( ConvertBase(ID.substr(4,2),  16, 10) );
+	JSID["figure_type"] = std::stoi( ConvertBase(ID.substr(6,2),  16, 10) );
+	JSID["model_number"] = std::stoi( ConvertBase(ID.substr(8,4),  16, 10) );
+	JSID["series"] = std::stoi( ConvertBase(ID.substr(12,2),  16, 10) );
+
+
+	//this is for debug
+	printf("%d ---- %s \n",JSID["game_character_id"].get<int>(),ID.substr(0,4).c_str());
+	printf("%d ---- %s \n",JSID["character_variant"].get<int>(),ID.substr(4,2).c_str());
+	printf("%d ---- %s \n",JSID["figure_type"].get<int>(),ID.substr(6,2).c_str());
+	printf("%d ---- %s \n",JSID["model_number"].get<int>(),ID.substr(8,4).c_str());
+	printf("%d ---- %s \n",JSID["series"].get<int>(),ID.substr(12,2).c_str());
+	return JSID;
+}
+
+std::string toamii(json JSID)
+{
+	string game_character_id = refill(shiftAndHex( std::to_string(JSID["game_character_id"].get<int>()) ),4);
+	string character_variant = refill(ConvertBase( std::to_string(JSID["character_variant"].get<int>()),10,16),2);
+	string figure_type = refill(ConvertBase( std::to_string(JSID["figure_type"].get<int>()),10,16),2);
+	string model_number = refill(ConvertBase( std::to_string(JSID["model_number"].get<int>()),10,16),4);
+	string series = refill(ConvertBase( std::to_string(JSID["series"].get<int>()),10,16),2);
+	
+	
+	//this is for debug
+	printf("%s ---- %s \n",std::to_string( JSID["series"].get<int>() ).c_str(),series.c_str());
+	printf("%s ---- %s \n",std::to_string( JSID["model_number"].get<int>() ).c_str(),model_number.c_str());
+	printf("%s ---- %s \n",std::to_string( JSID["figure_type"].get<int>() ).c_str(),figure_type.c_str());
+	printf("%s ---- %s \n",std::to_string( JSID["character_variant"].get<int>() ).c_str(),character_variant.c_str());
+	printf("%s ---- %s \n",std::to_string( JSID["game_character_id"].get<int>() ).c_str(),game_character_id.c_str());
+	
+	
+	string AMIIDD = 
+	game_character_id+
+	character_variant+
+	figure_type+
+	model_number+
+	series+
+	"02";
+	printf("AmiiboID: %s -\n",AMIIDD.c_str());
+	return AMIIDD;
 }

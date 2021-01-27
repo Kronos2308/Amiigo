@@ -434,21 +434,23 @@ void AmiigoUI::DrawFooter()
 		}
 	}else{
 		DrawJsonColorConfig(renderer, "AmiigoUI_DrawFooter_3");
-		StatusText = "Emuiibo not loaded, Click Here to Start";
-		if(CheckButtonPressed(&FooterRect, TouchX, TouchY))
-		{//dispose a click option for the user start Emuiibo from the app
+		StatusText = "Emuiibo not loaded";
+		static bool march = true;
+		if (march)
+		{//try to start Emuiibo from the app once on boot 
+			printf("Start Emuiibo process...");
 			pmshellInitialize();
-			/* Start process. */
-            const NcmProgramLocation programLocation{
-				.program_id = 0x0100000000000352,
-                .storageID = NcmStorageId_None,
-            };
+            const NcmProgramLocation programLocation{.program_id = 0x0100000000000352, .storageID = NcmStorageId_None, };
             u64 pid = 0;
             pmshellLaunchProgram(0, &programLocation, &pid);
 			pmshellExit();
-			g_emuiibo_init_ok = R_SUCCEEDED(emu::Initialize());
-			if(g_emuiibo_init_ok) emu::SetEmulationStatus(emu::EmulationStatus::On);
-		}//close here
+			if (pid > 0){ //check if start to run to evoid black screen
+				printf("PID %lu.\n",pid);
+				g_emuiibo_init_ok = R_SUCCEEDED(emu::Initialize());
+			} else
+				printf("Failed X.\n");
+			march = false; //close here
+		}
 
 	}
 

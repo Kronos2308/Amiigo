@@ -171,6 +171,15 @@ first = std::thread(APIDownloader);
 				UpUI->DrawUI();
 			}
 			break;
+			//Draw the Amiigo Config
+			case 4:
+			{//ToDo
+				MainUI->PleaseWait("Config Here...");
+				SDL_RenderPresent(renderer);
+				SDL_Delay(3000);
+				WindowState = 0;
+			}
+			break;
 		}
 		
 		//If exit option was selected we need to set done to 1
@@ -178,6 +187,7 @@ first = std::thread(APIDownloader);
 
 		//Draw the frame
         SDL_RenderPresent(renderer);
+		SDL_Delay(50);
 		
 		//automatic join after finish	
 		if ((first.joinable())&(destroyer == 1))

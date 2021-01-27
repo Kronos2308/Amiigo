@@ -112,10 +112,10 @@ void Scandownload(string folder)
 			string imageF = folder+"/"+route+"/amiibo_cache.png";
 			if(!CheckFileExists(imageI))
 			{
-			//get id
-			string APIContents;
-			json APIJSData;
-			ifstream IDReader(folder+"/"+route+"/amiibo.json");
+				//get id
+				string APIContents;
+				json APIJSData;
+				ifstream IDReader(folder+"/"+route+"/amiibo.json");
 				//Read each line
 				for(int i = 0; !IDReader.eof(); i++)
 				{
@@ -129,19 +129,30 @@ void Scandownload(string folder)
 				{
 					APIJSData = json::parse(APIContents);
 				}else
-					return;
-
-				string url = "http://myrincon.duckdns.org/hollow/emupi.php?emu="+std::to_string(APIJSData["id"]["game_character_id"].get<int>())+std::to_string(APIJSData["id"]["character_variant"].get<int>())+std::to_string(APIJSData["id"]["figure_type"].get<int>())+std::to_string(APIJSData["id"]["model_number"].get<int>())+std::to_string(APIJSData["id"]["series"].get<int>());
-				printf("%s - Downloading %s\nTo %s\n",route.c_str(),url.c_str(),imageI.c_str());
-				RetrieveToFile(url, imageF);
-				if (fsize(imageF) != 0)
-				rename(imageF.c_str(), imageI.c_str());
-				printf("Downloaded \n");
+					return; //amiibo file is poison
+					
+				printf("Missing image %s \n",imageI.c_str());
+				string AMID = toamii(APIJSData["id"]);
+				string iconDBex = "sdmc:/config/amiigo/IMG/icon_"+AMID.substr(0,8)+"-"+AMID.substr(8,16)+".png";
+				//if exist local used from there
+				if(CheckFileExists(iconDBex)&(fsize(iconDBex) != 0)){
+					printf("%s - Copy %s\nTo %s\n",route.c_str(),iconDBex.c_str(),imageI.c_str());
+					copy_me(iconDBex, imageI);
+					printf("Local used \n");
+				} else if (HasConnection()){
+					string url = "https://raw.githubusercontent.com/N3evin/AmiiboAPI/master/images/icon_"+AMID.substr(0,8)+"-"+AMID.substr(8,16)+".png";
+					printf("%s - Downloading %s\nTo %s\n",route.c_str(),url.c_str(),imageI.c_str());
+					RetrieveToFile(url, imageF);
+					if (fsize(imageF) != 0)
+					rename(imageF.c_str(), imageI.c_str());
+					copy_me(imageI, iconDBex);
+					printf("Downloaded \n");
+				}
 			}//else printf("The icon exist %s OK\n",route.c_str());
 		}
 		else 
 		{
-			if(!CheckFileExists(folder+"/"+route+"/tag.json"))
+			if(!CheckFileExists(folder+"/"+route+"/amiibo.json"))
 			Scandownload(folder+"/"+route);
 		}
 	}
@@ -149,18 +160,25 @@ void Scandownload(string folder)
 
 void APIDownloader()
 {
-	printf("Open Thread\n");
+	printf("Open network Thread\n");
+	mkdir("sdmc:/config/amiigo/", 1);
+	mkdir("sdmc:/config/amiigo/IMG", 1);
+	
 	printf("Api Downloader\n");
-	mkdir("sdmc:/config/amiigo/", 0);
-	mkdir("sdmc:/config/amiigo/IMG", 0);
-	if(HasConnection())
+	if(HasConnection())//Download Api
 	{
-	RetrieveToFile("http://myrincon.duckdns.org/hollow/emupi.php", "sdmc:/config/amiigo/API.temp");
-		if(CheckFileExists("sdmc:/config/amiigo/API.temp")&(fsize("sdmc:/config/amiigo/API.temp") != 0)){
+	RetrieveToFile("https://www.amiiboapi.com/api/amiibo/", "sdmc:/config/amiigo/API.temp");
+		if(CheckFileExists("sdmc:/config/amiigo/API.temp")&(fsize("sdmc:/config/amiigo/API.temp") != 0))
+		{
 			string AmiiboAPIString = "";
 			ifstream DataFileReader("sdmc:/config/amiigo/API.temp");
-			getline(DataFileReader, AmiiboAPIString);
-			DataFileReader.close();		
+			for(int f = 0; !DataFileReader.eof(); f++)
+			{
+				string TempLine = "";
+				getline(DataFileReader, TempLine);
+				AmiiboAPIString += TempLine;
+			}
+			DataFileReader.close();			
 			if(json::accept(AmiiboAPIString))//check if download is a valid json
 			{
 				remove("sdmc:/config/amiigo/API.json");
@@ -169,15 +187,10 @@ void APIDownloader()
 		}
 	}
 
-	//download amiibo icons
-	printf("Icon downloader\n");
+	//Download amiibo icons
+	printf("Icon Downloader\n");
 	Scandownload("sdmc:/emuiibo/amiibo");
 	
 printf("Close Thread\n");
 destroyer = 1;
-}
-
-void IconDownloader()
-{
-	
 }

@@ -157,7 +157,7 @@ void CreatorUI::GetInput()
 	//Scan input
 	while (SDL_PollEvent(Event))
 		{
-			printf("Button-ID-%d-\n",Event->jbutton.button);
+			//printf("Button-ID-%d-\n",Event->jbutton.button);
             switch (Event->type)
 			{
 				//Touchscreen
@@ -296,13 +296,14 @@ void CreatorUI::DrawUI()
 	//preview draw                            //bound check
 	if(HasSelectedSeries&SeriesList->IsActive&(SeriesList->SelectedIndex < (int)SortedAmiiboVarsVec.size())){
 		int IndexInJdata = SortedAmiiboVarsVec.at(SeriesList->SelectedIndex).ListIndex;
-		string ImgPath = "sdmc:/config/amiigo/IMG/"+JData["amiibo"][IndexInJdata]["image"].get<std::string>();
+		string ImgPath = "sdmc:/config/amiigo/IMG/icon_"+JData["amiibo"][IndexInJdata]["head"].get<std::string>()+"-"+JData["amiibo"][IndexInJdata]["tail"].get<std::string>()+".png";
+
 		//download preview by user input
 		if (DownPrev){
 			if(!CheckFileExists(ImgPath)&HasConnection()){
 			PleaseWait("Please wait, Downloading...");
 				string icontemp = ImgPath+".temp";
-				RetrieveToFile(JData["url"].get<std::string>()+JData["amiibo"][IndexInJdata]["image"].get<std::string>(), icontemp);
+				RetrieveToFile(JData["amiibo"][IndexInJdata]["image"].get<std::string>(), icontemp);
 				if (fsize(icontemp) != 0) rename(icontemp.c_str(), ImgPath.c_str());
 			}
 			imgres++;
@@ -383,15 +384,16 @@ void CreatorUI::ListSelect()
 			mkdir(AmiiboPath.c_str(), 0);
 			AmiiboPath += "/"+ JData["amiibo"][IndexInJdata]["name"].get<std::string>();
 			break;
-		}	
+		}
 
  		PleaseWait("Building: "+AmiiboPath.substr(20)+"...");//
 		mkdir(AmiiboPath.c_str(), 0);
 		
         //Write amiibo.json
+		json JSID = toemu(JData["amiibo"][IndexInJdata]["head"].get<std::string>()+JData["amiibo"][IndexInJdata]["tail"].get<std::string>());
         string FilePath = AmiiboPath + "/amiibo.json";
         ofstream CommonFileWriter(FilePath.c_str());
-        CommonFileWriter << "{\"first_write_date\": { \"d\": 1, \"m\": 1, \"y\": 2019 }, \"id\": {\"game_character_id\": "+std::to_string(JData["amiibo"][IndexInJdata]["emuiibo"]["game_character_id"].get<int>())+", \"character_variant\": "+std::to_string(JData["amiibo"][IndexInJdata]["emuiibo"]["character_variant"].get<int>())+", \"figure_type\": "+std::to_string(JData["amiibo"][IndexInJdata]["emuiibo"]["figure_type"].get<int>())+",  \"model_number\": "+std::to_string(JData["amiibo"][IndexInJdata]["emuiibo"]["model_number"].get<int>())+", \"series\": "+std::to_string(JData["amiibo"][IndexInJdata]["emuiibo"]["series"].get<int>())+" }, \"last_write_date\": { \"d\": 1, \"m\": 1, \"y\": 2019 }, \"mii_charinfo_file\": \"mii-charinfo.bin\", \"name\": \"" + JData["amiibo"][IndexInJdata]["name"].get<std::string>() + "\", \"version\": 0, \"write_counter\": 0 , \"uuid\": ["+std::to_string(rand() % 250 + 1)+", "+std::to_string(rand() % 250 + 1)+", "+std::to_string(rand() % 250 + 1)+", "+std::to_string(rand() % 250 + 1)+", "+std::to_string(rand() % 250 + 1)+", "+std::to_string(rand() % 250 + 1)+", "+std::to_string(rand() % 250 + 1)+", 0, 0, 0] }";
+        CommonFileWriter << "{\"tag\":\""+JData["amiibo"][IndexInJdata]["head"].get<std::string>()+JData["amiibo"][IndexInJdata]["tail"].get<std::string>()+"\",\"first_write_date\": { \"d\": 1, \"m\": 1, \"y\": 2019 }, \"id\": {\"game_character_id\": "+std::to_string(JSID["game_character_id"].get<int>())+", \"character_variant\": "+std::to_string(JSID["character_variant"].get<int>())+", \"figure_type\": "+std::to_string(JSID["figure_type"].get<int>())+",  \"model_number\": "+std::to_string(JSID["model_number"].get<int>())+", \"series\": "+std::to_string(JSID["series"].get<int>())+" }, \"last_write_date\": { \"d\": 1, \"m\": 1, \"y\": 2019 }, \"mii_charinfo_file\": \"mii-charinfo.bin\", \"name\": \"" + JData["amiibo"][IndexInJdata]["name"].get<std::string>() + "\", \"version\": 0, \"write_counter\": 0 , \"uuid\": ["+std::to_string(rand() % 250 + 1)+", "+std::to_string(rand() % 250 + 1)+", "+std::to_string(rand() % 250 + 1)+", "+std::to_string(rand() % 250 + 1)+", "+std::to_string(rand() % 250 + 1)+", "+std::to_string(rand() % 250 + 1)+", "+std::to_string(rand() % 250 + 1)+", 0, 0, 0] }";
         CommonFileWriter.close();
 		
         //Write amiibo.flag
@@ -403,13 +405,13 @@ void CreatorUI::ListSelect()
 		//create icon vars
 		string iconname = AmiiboPath+"/amiibo.png";
 		string icontemp = AmiiboPath+"/amiibo.temp";
-		string iconDBex = "sdmc:/config/amiigo/IMG/"+JData["amiibo"][IndexInJdata]["image"].get<std::string>();
+		string iconDBex = "sdmc:/config/amiigo/IMG/icon_"+JData["amiibo"][IndexInJdata]["head"].get<std::string>()+"-"+JData["amiibo"][IndexInJdata]["tail"].get<std::string>()+".png";
 		//if exist local used from there
 		if(!CheckFileExists(iconname)&CheckFileExists(iconDBex)&(fsize(iconDBex) != 0)) copy_me(iconDBex, iconname);
 		
 		//get the icon from online
 		if(!CheckFileExists(iconname)&HasConnection()){
-			RetrieveToFile(JData["url"].get<std::string>()+JData["amiibo"][IndexInJdata]["image"].get<std::string>(), icontemp);
+			RetrieveToFile(JData["amiibo"][IndexInJdata]["image"].get<std::string>(), icontemp);
 			if (fsize(icontemp) != 0){
 			copy_me(icontemp, iconDBex);
 			rename(icontemp.c_str(), iconname.c_str());	
@@ -517,19 +519,23 @@ if(HasSelectedSeries){
 
 void CreatorUI::GetDataFromAPI(string FilterTerm)
 {
-		for(int i = 0;i < 3;i++)//wait for the the api
-		{
+	for(int i = 0;i < 3;i++)//wait for the the api
+	{
 		ifstream DataFileReader("sdmc:/config/amiigo/API.json");
-		getline(DataFileReader, AmiiboAPIString);
-		DataFileReader.close();		
-		if(AmiiboAPIString.size()!=0) break;			
+		for(int f = 0; !DataFileReader.eof(); f++)
+		{
+			string TempLine = "";
+			getline(DataFileReader, TempLine);
+			AmiiboAPIString += TempLine;
 		}
+		DataFileReader.close();
+		if(AmiiboAPIString.size()!=0) break;			
+	}
 	if(json::accept(AmiiboAPIString))
 	{
-	//Parse and use the JSON data
-	JData = json::parse(AmiiboAPIString);
-	JDataSize = JData["amiibo"].size();
-			
+		//Parse and use the JSON data
+		JData = json::parse(AmiiboAPIString);
+		JDataSize = JData["amiibo"].size();
 	}
 }
 

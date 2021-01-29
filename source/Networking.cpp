@@ -10,8 +10,9 @@
 #include <chrono>
 #include <thread>
 #include "Utils.h"
+#include "Networking.h"
 
-extern int destroyer;
+extern bool ThreadReady;
 //Stolen from Goldleaf
 //Thank you XOR
 std::size_t CurlStrWrite(const char* in, std::size_t size, std::size_t num, std::string* out)
@@ -95,69 +96,7 @@ bool HasConnection()
 	return (strg > 0);
 }
 
-void Scandownload(string folder)
-{
-	//Do the actual scanning
-	DIR* dir;
-	struct dirent* ent;
-	dir = opendir(folder.c_str());
-	while ((ent = readdir(dir)))
-	{
-		if (destroyer != 0) break;
-		string route = ent->d_name;
-		//Check if Amiibo or empty folder
-		if(CheckFileExists(folder+"/"+route+"/amiibo.json"))
-		{
-			string imageI = folder+"/"+route+"/amiibo.png";
-			string imageF = folder+"/"+route+"/amiibo_cache.png";
-			if(!CheckFileExists(imageI))
-			{
-				//get id
-				string APIContents;
-				json APIJSData;
-				ifstream IDReader(folder+"/"+route+"/amiibo.json");
-				//Read each line
-				for(int i = 0; !IDReader.eof(); i++)
-				{
-					string TempLine = "";
-					getline(IDReader, TempLine);
-					APIContents += TempLine;
-				}
-			
-				IDReader.close();
-				if(json::accept(APIContents))
-				{
-					APIJSData = json::parse(APIContents);
-				}else
-					return; //amiibo file is poison
-					
-				printf("Missing image %s \n",imageI.c_str());
-				string AMID = toamii(APIJSData["id"]);
-				string iconDBex = "sdmc:/config/amiigo/IMG/icon_"+AMID.substr(0,8)+"-"+AMID.substr(8,16)+".png";
-				//if exist local used from there
-				if(CheckFileExists(iconDBex)&(fsize(iconDBex) != 0)){
-					printf("%s - Copy %s\nTo %s\n",route.c_str(),iconDBex.c_str(),imageI.c_str());
-					copy_me(iconDBex, imageI);
-					printf("Local used \n");
-				} else if (HasConnection()){
-					string url = "https://raw.githubusercontent.com/N3evin/AmiiboAPI/master/images/icon_"+AMID.substr(0,8)+"-"+AMID.substr(8,16)+".png";
-					printf("%s - Downloading %s\nTo %s\n",route.c_str(),url.c_str(),imageI.c_str());
-					RetrieveToFile(url, imageF);
-					if (fsize(imageF) != 0)
-					rename(imageF.c_str(), imageI.c_str());
-					copy_me(imageI, iconDBex);
-					printf("Downloaded \n");
-				}
-			}//else printf("The icon exist %s OK\n",route.c_str());
-		}
-		else 
-		{
-			if(!CheckFileExists(folder+"/"+route+"/amiibo.json"))
-			Scandownload(folder+"/"+route);
-		}
-	}
-}
-
+//Network Thread
 void APIDownloader()
 {
 	printf("Open network Thread\n");
@@ -192,5 +131,69 @@ void APIDownloader()
 	Scandownload("sdmc:/emuiibo/amiibo");
 	
 printf("Close Thread\n");
-destroyer = 1;
+ThreadReady = true;
+}
+
+// Scan for missing Icons and download from the API or take them from the SD 
+void Scandownload(string folder)
+{
+	//Do the actual scanning
+	DIR* dir;
+	struct dirent* ent;
+	dir = opendir(folder.c_str());
+	while ((ent = readdir(dir)))
+	{
+		if (ThreadReady) break; //exit was called before thread ends
+		string route = ent->d_name;
+		//Check if Amiibo or empty folder
+		if(CheckFileExists(folder+"/"+route+"/amiibo.json"))
+		{	//set vars
+			string iconAmii = folder+"/"+route+"/amiibo.png";
+			string iconTemp = folder+"/"+route+"/amiibo_cache.png";
+			if(!CheckFileExists(iconAmii))
+			{
+				printf("Missing image %s \n",iconAmii.c_str());
+				//get id
+				string APIContents;
+				json APIJSData;
+				ifstream IDReader(folder+"/"+route+"/amiibo.json");
+				//Read each line
+				for(int i = 0; !IDReader.eof(); i++)
+				{
+					string TempLine = "";
+					getline(IDReader, TempLine);
+					APIContents += TempLine;
+				}
+			
+				IDReader.close();
+				if(json::accept(APIContents))
+				{
+					APIJSData = json::parse(APIContents);
+				}else
+					return; //amiibo file is poison
+				
+				//get amiibo tag and build the File name
+				string AMID = toamii(APIJSData["id"]);
+				string IconCache = "sdmc:/config/amiigo/IMG/icon_"+AMID.substr(0,8)+"-"+AMID.substr(8,16)+".png";
+				string iconURL = "https://raw.githubusercontent.com/N3evin/AmiiboAPI/master/images/icon_"+AMID.substr(0,8)+"-"+AMID.substr(8,16)+".png";
+				
+				//if exist local used from there
+				if(CheckFileExists(IconCache)&(fsize(IconCache) != 0)){
+					printf("%s - Copy %s\nTo %s\n",route.c_str(),IconCache.c_str(),iconAmii.c_str());
+					copy_me(IconCache, iconAmii);
+					printf("Local used \n");
+				} else if (HasConnection()){
+					printf("%s - Downloading %s\nTo %s\n",route.c_str(),iconURL.c_str(),iconAmii.c_str());
+					RetrieveToFile(iconURL, iconTemp);
+					if (fsize(iconTemp) != 0)
+					rename(iconTemp.c_str(), iconAmii.c_str());
+					copy_me(iconAmii, IconCache);
+					printf("Downloaded \n");
+				}
+			}//else printf("The icon exist %s OK\n",route.c_str());
+		} else 
+		{//Recursive search
+			if(!CheckFileExists(folder+"/"+route+"/amiibo.json")) Scandownload(folder+"/"+route);
+		}
+	}
 }

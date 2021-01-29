@@ -5,52 +5,13 @@
 #include <emuiibo.hpp>
 #include <vector>
 #include <dirent.h>
-#include <UI.h>
 #include <Utils.h>
+#include <AmiigoUI.h>
 #include "nlohmann/json.hpp"
 #include <fstream>
 using namespace std;
 using json = nlohmann::json;
-SDL_Surface* AIcon;//surface buffer to amiibo image
-SDL_Surface* BIcon;//surface buffer to amiibo sel image
-int ImgAct = 1; //load image triger
-int ImgSel = 1; //load sel image triger
-char CurrentAmiibo[FS_MAX_PATH] = {0};//active amiibo
 extern bool g_emuiibo_init_ok;
-
-class AmiigoUI
-{
-	private:
-	TTF_Font *HeaderFont;
-	TTF_Font *ListFont;
-	SDL_Color TextColour = {0, 0, 0};
-	void DrawHeader();
-	void DrawFooter();
-	int HeaderHeight;
-	int FooterHeight;
-	vector <dirent> Files{vector <dirent>(0)};
-	int TouchX = -1;
-	int TouchY = -1;
-	ScrollList *AmiiboList;
-	json JData;
-	public:
-	AmiigoUI();
-	void GetInput();
-	void DrawUI();
-	void ScanForAmiibos();
-	void PleaseWait(string mensage);
-	void InitList();
-	void SetAmiibo(int);
-	SDL_Event *Event;
-	int *WindowState;
-	SDL_Renderer *renderer;
-	int *Width;
-	int *Height;
-	int *IsDone;
-	ScrollList *MenuList;
-	int AmiiboListWidth;
-	string ListDir = "sdmc:/emuiibo/amiibo/";
-};
 
 AmiigoUI::AmiigoUI()
 {
@@ -247,8 +208,8 @@ void AmiigoUI::DrawUI()
 	
 	//draw amiibo image
 	SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
-	SDL_Texture* Headericon = SDL_CreateTextureFromSurface(renderer, AIcon);
-	SDL_Rect ImagetRect = {5, 0 , (AIcon->w * (80 * 100 /AIcon->h) /100),80};// 65  80
+	SDL_Texture* Headericon = SDL_CreateTextureFromSurface(renderer, ActAmiibo);
+	SDL_Rect ImagetRect = {5, 0 , (ActAmiibo->w * (80 * 100 /ActAmiibo->h) /100),80};// 65  80
 	SDL_RenderCopy(renderer, Headericon , NULL, &ImagetRect);
 	SDL_DestroyTexture(Headericon);
 				
@@ -257,6 +218,7 @@ void AmiigoUI::DrawUI()
 	
 	DrawButtonBorders(renderer, AmiiboList, MenuList, HeaderHeight, FooterHeight, *Width, *Height, false);
 	
+	//load the preview image for the amiibo 
 	int maxL =  Files.size()-1;
 	if ((AmiiboList->SelectedIndex != ImgSel)&AmiiboList->IsActive)
 	{
@@ -273,10 +235,10 @@ void AmiigoUI::DrawUI()
 			//load the selected image
 			string ImgPath = std::string(ListDir)+ std::string(Files.at(list).d_name)+"/amiibo.png";
 			if(CheckFileExists(ImgPath)&(fsize(ImgPath) != 0)){
-				BIcon = IMG_Load(ImgPath.c_str());
+				SelAmiibo = IMG_Load(ImgPath.c_str());
 			}else{
 				if(CheckFileExists(std::string(ListDir)+ std::string(Files.at(list).d_name)+"/amiibo.json"))
-				{BIcon = IMG_Load("romfs:/unknow.png");}else{BIcon = IMG_Load("romfs:/folder.png");}
+				{SelAmiibo = IMG_Load("romfs:/unknow.png");}else{SelAmiibo = IMG_Load("romfs:/folder.png");}
 			}
 		}
 	}
@@ -293,9 +255,9 @@ void AmiigoUI::DrawUI()
 		{
 			//draw select amiibo image
 			SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
-			SDL_Texture* Headericon2 = SDL_CreateTextureFromSurface(renderer, BIcon);
+			SDL_Texture* Headericon2 = SDL_CreateTextureFromSurface(renderer, SelAmiibo);
 			int XM = 695,YM = 75, WM = 260, HM = 280,
-			WS = (BIcon->w * (HM * 1000 /BIcon->h) /1000),HS = (BIcon->h * (WM * 1000 /BIcon->w) /1000),
+			WS = (SelAmiibo->w * (HM * 1000 /SelAmiibo->h) /1000),HS = (SelAmiibo->h * (WM * 1000 /SelAmiibo->w) /1000),
 			WT = WS > WM ? WM : WS,HT = WS > WM ? HS : HM,
 			XT = XM + (WS < WM ? (WM - WS)/2 : 0),YT = YM + (WS > WM ? (HM - HS) : 0);// printf("print size: %dx%d\n",WS,HM);
 			SDL_Rect ImagetRect2 = {XT, YT, WT, HT};
@@ -303,7 +265,8 @@ void AmiigoUI::DrawUI()
 			SDL_DestroyTexture(Headericon2);
 		}
 	}
-	
+	ScrollBarDraw(renderer, Files.size(), AmiiboList->SelectedIndex,AmiiboList->IsActive);
+
 	//Reset touch coords
 	TouchX = -1;
 	TouchY = -1;
@@ -322,7 +285,7 @@ void AmiigoUI::DrawHeader()
 	//String is empty so we need to set it to something so SDL doesn't crash
 	if(CurrentAmiibo[0] == '\0'||!g_emuiibo_init_ok)
 	{
-		if(ImgAct > 0) {AIcon = IMG_Load("romfs:/Amiibo.png"); ImgAct = 0;}
+		if(ImgAct > 0) {ActAmiibo = IMG_Load("romfs:/Amiibo.png"); ImgAct = 0;}
 		if(g_emuiibo_init_ok)
 		HeaderText = "No Amiibo Selected";
 		else
@@ -337,7 +300,7 @@ void AmiigoUI::DrawHeader()
 		//If the register file doesn't exist display message. This prevents a infinate loop.
 		if(!FileReader){
 			HeaderText = "Missing amiibo json!";
-			AIcon = IMG_Load("romfs:/Amiibo.png");//empty icon
+			ActAmiibo = IMG_Load("romfs:/Amiibo.png");//empty icon
 		} 
 		else //Else get the amiibo name from the json
 		{
@@ -361,12 +324,12 @@ void AmiigoUI::DrawHeader()
 					if(CheckFileExists(imageI)&(fsize(imageI) != 0))
 					{
 							ImgAct = 0;//set image triger off
-							AIcon = IMG_Load(imageI.c_str());
+							ActAmiibo = IMG_Load(imageI.c_str());
 							printf("Image %s loaded OK\n",imageI.c_str());
 					}else{
 						ImgAct = 0;//set image triger off
 						printf("Image %s Missing KO\n",imageI.c_str());
-						AIcon = IMG_Load("romfs:/Amiibo.png");//empty icon
+						ActAmiibo = IMG_Load("romfs:/Amiibo.png");//empty icon
 					}
 				}
 			}else HeaderText = "amiibo.json bad sintax";

@@ -30,3 +30,4 @@ class ScrollList
 bool CheckButtonPressed(SDL_Rect*, int, int);
 TTF_Font *GetSharedFont(int FontSize);
 void DrawButtonBorders(SDL_Renderer*, ScrollList*, ScrollList*, int, int, int, int, bool);
+void ScrollBarDraw(SDL_Renderer* renderer, int Total, int Select, bool Activate=true);

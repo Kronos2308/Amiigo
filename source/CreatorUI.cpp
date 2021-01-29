@@ -12,69 +12,9 @@
 #include <vector>
 #include <UI.h>
 #include "Utils.h"
+#include "CreatorUI.h"
 using namespace std;
 using json = nlohmann::json;
-
-SDL_Surface* CIcon;//surface buffer to amiibo sel image
-int Ordetype = 1;
-int Creatype = 0;
-int DownPrev = 0;
-int imgres = 20;
-int indexb1 = 0;
-int indexb2 = 0;
-int indexb3 = 0;
-string List = "amiiboSeries";
-
-class AmiiboVars
-{
-	public:
-	string AmiiboSeries = "";
-	string AmiiboName = "";
-	int ListIndex = 0;
-};
-
-class CreatorUI
-{
-	private:
-	TTF_Font *HeaderFont;
-	TTF_Font *ListFont;
-	SDL_Color TextColour = {0, 0, 0};
-	void DrawHeader();
-	void DrawAmiiboList();
-	void DrawSeriesList();
-	void DrawFooter();
-	int HeaderHeight;
-	int FooterHeight;
-	int ListHeight;
-	int TouchX = -1;
-	int TouchY = -1;
-	json JData;
-	int JDataSize = 0;
-	bool HasSelectedSeries = false;
-	vector<string> SeriesVec;
-	vector<AmiiboVars> AmiiboVarsVec;
-	vector<AmiiboVars> SortedAmiiboVarsVec;
-	string AmiiboAPIString = "";
-	void PleaseWait(string mensage);
-	void Createlist();
-	public:
-	CreatorUI();
-	void GetInput();
-	void DrawUI();
-	void GetDataFromAPI(string);
-	void InitList();
-	void ListSelect();
-	SDL_Event *Event;
-	int *WindowState;
-	SDL_Renderer *renderer;
-	int *Width;
-	int *Height;
-	int *IsDone;
-	ScrollList *SeriesList;
-	ScrollList *MenuList;
-	int SeriesListWidth;
-	string *CurrentPath;
-};
 
 CreatorUI::CreatorUI()
 {
@@ -83,7 +23,7 @@ CreatorUI::CreatorUI()
 	ListFont = GetSharedFont(32);
 	//HeaderFont = TTF_OpenFont("romfs:/font.ttf", 48); //Load the header font
 	//ListFont = TTF_OpenFont("romfs:/font.ttf", 32); //Load the list font
-	GetDataFromAPI(""); //Get data from the API
+	GetDataFromAPI(); //Get data from the API File
 	
 	//Create the lists
 	SeriesList = new ScrollList();
@@ -248,8 +188,7 @@ void CreatorUI::GetInput()
 								SeriesList->SelectedIndex = 0;
 								SeriesList->CursorIndex = 0;
 								SeriesList->ListRenderOffset = 0;
-								Ordetype++;
-								if(Ordetype > 3) {Ordetype = 1;}
+								Ordetype++; if(Ordetype > 3) {Ordetype = 1;}
 								CreatorUI::Createlist();
 								CreatorUI::InitList();
 							}
@@ -313,15 +252,15 @@ void CreatorUI::DrawUI()
 		if (imgres != SeriesList->SelectedIndex)
 		{
 			imgres = SeriesList->SelectedIndex;
-			if(CheckFileExists(ImgPath)&(fsize(ImgPath) != 0)) CIcon = IMG_Load(ImgPath.c_str()); else CIcon = IMG_Load("romfs:/download.png");	
+			if(CheckFileExists(ImgPath)&(fsize(ImgPath) != 0)) PrevIcon = IMG_Load(ImgPath.c_str()); else PrevIcon = IMG_Load("romfs:/download.png");	
 			//printf("%s\n",ImgPath.c_str());
-		} 
+		}
 
 		//draw select amiibo image
 		SDL_SetHint(SDL_HINT_RENDER_SCALE_QUALITY, "1");
-		SDL_Texture* Headericon2 = SDL_CreateTextureFromSurface(renderer, CIcon);
+		SDL_Texture* Headericon2 = SDL_CreateTextureFromSurface(renderer, PrevIcon);
 		int XM = 695,YM = 75, WM = 260, HM = 280,
-		WS = (CIcon->w * (HM * 1000 /CIcon->h) /1000),HS = (CIcon->h * (WM * 1000 /CIcon->w) /1000),
+		WS = (PrevIcon->w * (HM * 1000 /PrevIcon->h) /1000),HS = (PrevIcon->h * (WM * 1000 /PrevIcon->w) /1000),
 		WT = WS > WM ? WM : WS,HT = WS > WM ? HS : HM,
 		XT = XM + (WS < WM ? (WM - WS)/2 : 0),YT = YM + (WS > WM ? (HM - HS) : 0);// printf("print size: %dx%d\n",WS,HM);
 		SDL_Rect ImagetRect2 = {XT, YT, WT, HT};
@@ -344,7 +283,8 @@ void CreatorUI::DrawUI()
 		MenuList->IsActive = true;
 		SeriesList->IsActive = false;
 	}
-	
+	ScrollBarDraw(renderer, (HasSelectedSeries ? SortedAmiiboVarsVec.size() : SeriesVec.size()),SeriesList->SelectedIndex,SeriesList->IsActive);
+
 	//Reset touch coords
 	TouchX = -1;
 	TouchY = -1;
@@ -364,7 +304,7 @@ void CreatorUI::ListSelect()
 			break;
 			
 			case 1:
-				switch(Ordetype)
+/*				switch(Ordetype)
 				{
 					case 1:
 					List = "amiiboSeries";
@@ -378,7 +318,7 @@ void CreatorUI::ListSelect()
 					List = "gameSeries";
 					break;
 				}	
-
+*/
 			AmiiboPath = "sdmc:/emuiibo/amiibo/";//force root if you are not on root
 			AmiiboPath += JData["amiibo"][IndexInJdata][List].get<std::string>()+"_";
 			mkdir(AmiiboPath.c_str(), 0);
@@ -478,7 +418,6 @@ if(HasSelectedSeries){
 		
 		case 1:
 		StatusText = "-> "+JData["amiibo"][SortedAmiiboVarsVec.at(SeriesList->SelectedIndex).ListIndex][List].get<std::string>()+"/";
-		//StatusText = "("+StatusText+")";
 		break;
 	}	
 } else {
@@ -517,7 +456,7 @@ if(HasSelectedSeries){
 	SDL_FreeSurface(HeaderTextSurface);
 }
 
-void CreatorUI::GetDataFromAPI(string FilterTerm)
+void CreatorUI::GetDataFromAPI()
 {
 	for(int i = 0;i < 3;i++)//wait for the the api
 	{
@@ -574,8 +513,11 @@ void CreatorUI::DrawFooter()
 	//Draw the back footer button
 	SDL_Rect BackFooterRect = {*Width/2,FooterYOffset, *Width/2, FooterHeight};
 	FooterText = "Back";
-	DrawJsonColorConfig(renderer, "CreatorUI_DrawFooter_Back");
-	
+	if(HasSelectedSeries)
+		DrawJsonColorConfig(renderer, "CreatorUI_DrawFooter_Back");
+	else
+		SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
+
 	//Back was pressed
 	if(CheckButtonPressed(&BackFooterRect, TouchX, TouchY))
 	{

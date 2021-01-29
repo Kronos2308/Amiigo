@@ -41,11 +41,22 @@ class CreatorUI
 	vector<AmiiboVars> SortedAmiiboVarsVec;
 	string AmiiboAPIString = "";
 	void PleaseWait(string mensage);
+	void Createlist();
+	SDL_Surface* PrevIcon;//surface buffer to amiibo select image
+	int Ordetype = 1;
+	int Creatype = 0;
+	int DownPrev = 0;
+	int imgres = 20;
+	int indexb1 = 0;
+	int indexb2 = 0;
+	int indexb3 = 0;
+	string List = "amiiboSeries";
+
 	public:
 	CreatorUI();
 	void GetInput();
 	void DrawUI();
-	void GetDataFromAPI(string);
+	void GetDataFromAPI();
 	void InitList();
 	void ListSelect();
 	SDL_Event *Event;
@@ -59,3 +70,4 @@ class CreatorUI
 	int SeriesListWidth;
 	string *CurrentPath;
 };
+

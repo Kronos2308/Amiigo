@@ -23,6 +23,11 @@ class AmiigoUI
 	int TouchY = -1;
 	ScrollList *AmiiboList;
 	json JData;
+	SDL_Surface* ActAmiibo;//surface buffer to amiibo image
+	SDL_Surface* SelAmiibo;//surface buffer to amiibo sel image
+	int ImgAct = 1; //load image triger
+	int ImgSel = 1; //load sel image triger
+	char CurrentAmiibo[FS_MAX_PATH] = {0};//active amiibo
 	public:
 	AmiigoUI();
 	void GetInput();

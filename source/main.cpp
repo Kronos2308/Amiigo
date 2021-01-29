@@ -13,7 +13,7 @@
 #include <emuiibo.hpp>
 #include <thread>
 #include <Utils.h>
-int destroyer = 0;
+bool ThreadReady = false;
 bool g_emuiibo_init_ok = false;
 int main(int argc, char *argv[])
 {
@@ -24,9 +24,9 @@ socketInitializeDefault();
     nxlinkStdio();
     printf("printf output now goes to nxlink server\n");
 #endif
-std::thread  first;
-first = std::thread(APIDownloader);
-//std::thread second = std::thread(IconDownloader);
+//start Network thread
+std::thread first = std::thread(APIDownloader);
+
 	//Vars
     SDL_Event event;
     SDL_Window *window;
@@ -190,14 +190,13 @@ first = std::thread(APIDownloader);
 		SDL_Delay(50);
 		
 		//automatic join after finish	
-		if ((first.joinable())&(destroyer == 1))
-			first.join();
+		if ((first.joinable())& ThreadReady) first.join();
     }
 	
 	//join threads before exit
 	if (first.joinable())
 	{
-	destroyer = 1;
+	ThreadReady = true;
 		MainUI->PleaseWait("Please wait, Thread is Still Working on DataBase...");
 		SDL_RenderPresent(renderer);
 		first.join();

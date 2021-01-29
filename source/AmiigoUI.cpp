@@ -67,6 +67,7 @@ AmiigoUI::AmiigoUI()
 	MenuList->ListingTextVec.push_back("Check for updates");
 	MenuList->ListingTextVec.push_back("Exit");
 //	MenuList->ListingTextVec.push_back("Settings"); //ToDo
+
 	//Scan the Amiibo folder for Amiibos
 	ScanForAmiibos();
 }
@@ -199,9 +200,10 @@ void AmiigoUI::GetInput()
 							strcat(PathToAmiibo, Files.at(AmiiboList->SelectedIndex).d_name);
 							//make sure not delete the active amiibo
 							if(strstr(CurrentAmiibo,PathToAmiibo) == NULL){
-							fsdevDeleteDirectoryRecursively(PathToAmiibo);
-							ScanForAmiibos();
+								fsdevDeleteDirectoryRecursively(PathToAmiibo);
+								ScanForAmiibos();
 							}
+							remove(PathToAmiibo);
 						}else if(Event->jbutton.button == 9){
 							MenuList->IsActive = false;
 							AmiiboList->IsActive = true;

@@ -3,6 +3,8 @@
 #include <iostream>
 #include <string>
 #include <algorithm>
+#include <fstream>
+#include <sstream>
 using std::string;
 
 // Convert arbitrary base to base 10
@@ -123,20 +125,14 @@ std::string refill(std::string data,u64 espect){
 }
 
 
-// id converter by CompSciOrBust
+// endian id converter by CompSciOrBust
 std::string shiftAndHex(std::string input)
 {
     unsigned short value = std::stoi(input);
-    unsigned short a = value & 0xFF00;
-    a = 0x00FF & (a >> 8);
-    value = value << 8;
-    value = 0xffff & value;
-    value = value | a;
-    char lazyBuffer[100000];
-    sprintf(lazyBuffer, "%02X", value);
-	std::string finalbuf = std::string(lazyBuffer);
-	transform(finalbuf.begin(), finalbuf.end(), finalbuf.begin(), ::tolower);
-    return finalbuf;
+	value = (value << 8) | (value >> 8);
+	std::ostringstream oss;
+	oss << std::hex << value;
+    return oss.str();
 }
 
 std::string shiftAndDec(std::string input)

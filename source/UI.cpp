@@ -169,21 +169,15 @@ void DrawButtonBorders(SDL_Renderer* renderer, ScrollList *LeftList, ScrollList 
 }
 
 void ScrollBarDraw(SDL_Renderer* renderer, int Total, int Select,bool Activate){
-	static int sete =1;
-	//Scroll bar
 	if ((Total > 9)&Activate){
-		//split the distance
+		//split the distance in peaces and get exact values
 		double Texact = Total;
 		double Bar = ((( 720-(((720 / 100) * 10)*2)-4)/(Texact)));
 		
-		//get aproximate values
-		int BarSize = Bar + 1;       //aproximate size
-		int BarPos  = Bar*Select+74; //aproximate Position
+		//Get approximate values, 1 pixel of error
+		int BarSize = Bar + 1;       //approximate Size
+		int BarPos  = Bar*Select+74; //approximate Position
 		
-		if (sete != Select){
-			printf("values: %d/%d \n Bar: %d \n comp: %d/%d\n",Select,Total,BarSize,BarSize*Select,BarSize*Total);
-			sete = Select;
-		}
 		//Draw the ScrollBar
 		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
 		SDL_Rect HeaderRect = {961, BarPos, 1, BarSize};

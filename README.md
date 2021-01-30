@@ -2,7 +2,7 @@
 # Amiigo
 A GUI for Emuiibo. The Emuiibo sysmodule is required in order to use Amiigo.
 
-<a href="https://github.com/CompSciOrBust/Amiigo/releases"><img src="https://img.shields.io/github/downloads/CompSciOrBust/Amiigo/total?style=for-the-badge" alr = "Downloads " /></a>
+<a style="display:inline" href="https://github.com/CompSciOrBust/Amiigo/releases"><img src="https://img.shields.io/github/downloads/CompSciOrBust/Amiigo/total?style=for-the-badge" alr = "Downloads " /></a>
 <a href="https://discord.gg/ZhRn3nn"><img src="https://img.shields.io/discord/673622282790502402?color=green&label=Discord&logo=discord&style=for-the-badge" alt="Discord Server" /></a>
 <a href="https://twitter.com/CompSciOrBust?ref_src=twsrc%5Etfw"><img src="https://img.shields.io/twitter/follow/CompSciOrBust?color=blue&label=follow&logo=twitter&style=for-the-badge" alt="Follow on twitter" /></a>
 

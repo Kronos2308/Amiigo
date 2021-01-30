@@ -172,7 +172,7 @@ void ScrollBarDraw(SDL_Renderer* renderer, int Total, int Select,bool Activate){
 	if ((Total > 9)&Activate){
 		//split the distance in peaces and get exact values
 		double Texact = Total;
-		double Bar = ((( 720-(((720 / 100) * 10)*2)-4)/(Texact)));
+		double Bar = 580/Texact;
 		
 		//Get approximate values, 1 pixel of error
 		int BarSize = Bar + 1;       //approximate Size

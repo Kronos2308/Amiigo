@@ -43,8 +43,8 @@ class CreatorUI
 	void PleaseWait(string mensage);
 	void Createlist();
 	SDL_Surface* PrevIcon;//surface buffer to amiibo select image
+	bool Creatype = true;
 	int Ordetype = 1;
-	int Creatype = 0;
 	int DownPrev = 0;
 	int imgres = 20;
 	int indexb1 = 0;

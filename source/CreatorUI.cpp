@@ -37,17 +37,9 @@ void CreatorUI::Createlist()
 	List = "amiiboSeries";
 	switch(Ordetype)
 	{
-		case 1:
-		List = "amiiboSeries";
-		break;
-		
-		case 2:
-		List = "character";
-		break;
-		
-		case 3:
-		List = "gameSeries";
-		break;
+		case 1:	List = "amiiboSeries"; break;
+		case 2: List = "character"; break;
+		case 3: List = "gameSeries"; break;
 	}	
 	//Get all of the Series' names and add Amiibos to the AmiiboVarsVec
 	for(int i = 0; i < JDataSize; i++)
@@ -161,9 +153,11 @@ void CreatorUI::GetInput()
 						{
 							if(SeriesList->IsActive)
 							{
-								indexb1 = SeriesList->SelectedIndex;
-								indexb2 = SeriesList->CursorIndex;
-								indexb3 = SeriesList->ListRenderOffset;
+								if(!HasSelectedSeries){
+									indexb1 = SeriesList->SelectedIndex;
+									indexb2 = SeriesList->CursorIndex;
+									indexb3 = SeriesList->ListRenderOffset;
+								}
 								ListSelect();
 							}
 							else
@@ -182,7 +176,7 @@ void CreatorUI::GetInput()
 							HasSelectedSeries = false;
 						}else if(Event->jbutton.button == 11)
 						{
-							if(HasSelectedSeries){Creatype++; if(Creatype > 1) {Creatype = 0;}}
+							if(HasSelectedSeries){Creatype = !Creatype;}
 							else
 							{//change series
 								SeriesList->SelectedIndex = 0;
@@ -297,33 +291,14 @@ void CreatorUI::ListSelect()
 	{
 		int IndexInJdata = SortedAmiiboVarsVec.at(SeriesList->SelectedIndex).ListIndex;
         string AmiiboPath = *CurrentPath ;
-		switch(Creatype)
+		if(Creatype)
 		{
-			case 0:
 			AmiiboPath += JData["amiibo"][IndexInJdata]["name"].get<std::string>(); 
-			break;
-			
-			case 1:
-/*				switch(Ordetype)
-				{
-					case 1:
-					List = "amiiboSeries";
-					break;
-					
-					case 2:
-					List = "character";
-					break;
-					
-					case 3:
-					List = "gameSeries";
-					break;
-				}	
-*/
+		} else {
 			AmiiboPath = "sdmc:/emuiibo/amiibo/";//force root if you are not on root
 			AmiiboPath += JData["amiibo"][IndexInJdata][List].get<std::string>()+"_";
 			mkdir(AmiiboPath.c_str(), 0);
 			AmiiboPath += "/"+ JData["amiibo"][IndexInJdata]["name"].get<std::string>();
-			break;
 		}
 
  		PleaseWait("Building: "+AmiiboPath.substr(20)+"...");//
@@ -376,7 +351,6 @@ void CreatorUI::ListSelect()
 			{
 				SortedAmiiboVarsVec.push_back(AmiiboVarsVec.at(i));
 					SeriesList->ListingTextVec.push_back(AmiiboVarsVec.at(i).AmiiboName);
-
 				//SeriesList->ListingTextVec.push_back(SortedAmiiboVarsVec.at(SortedAmiiboVarsVec.size()-1).AmiiboName);
 			}
 		}
@@ -402,50 +376,31 @@ void CreatorUI::DrawHeader()
 	SDL_RenderCopy(renderer, Headericon , NULL, &ImagetRect);
 	SDL_DestroyTexture(Headericon);
 
-//status text to build amiibos
-std::string StatusText = "";
-if(HasSelectedSeries){
-	if(CheckButtonPressed(&HeaderRect, TouchX, TouchY))
-	{
-		Creatype++; if(Creatype > 1) {Creatype = 0;}
+	//status text to build amiibos
+	std::string StatusText = "";
+	if(HasSelectedSeries){
+		if(CheckButtonPressed(&HeaderRect, TouchX, TouchY)) Creatype = !Creatype;
+
+		if (Creatype)
+			StatusText = "-> ./";
+		else
+			StatusText = "-> "+JData["amiibo"][SortedAmiiboVarsVec.at(SeriesList->SelectedIndex).ListIndex][List].get<std::string>()+"/";
+		
+	} else {
+		if(CheckButtonPressed(&HeaderRect, TouchX, TouchY))
+		{
+			Ordetype++; if(Ordetype > 3) {Ordetype = 1;} CreatorUI::Createlist();CreatorUI::InitList();
+		}
+
+		switch(Ordetype)
+		{
+			case 1: StatusText = "[AmiiboSeries]"; break;
+			case 2: StatusText = "[Character]"; break;
+			case 3: StatusText = "[GameSeries]"; break;
+		}	
 	}
-
-	switch(Creatype)
-	{
-		case 0:
-		StatusText = "-> ./";
-		break;
-		
-		case 1:
-		StatusText = "-> "+JData["amiibo"][SortedAmiiboVarsVec.at(SeriesList->SelectedIndex).ListIndex][List].get<std::string>()+"/";
-		break;
-	}	
-} else {
-	if(CheckButtonPressed(&HeaderRect, TouchX, TouchY))
-	{
-		Ordetype++; if(Ordetype > 3) {Ordetype = 1;} CreatorUI::Createlist();CreatorUI::InitList();
-	}
-
-	switch(Ordetype)
-	{
-		
-		case 1:
-		StatusText = "[AmiiboSeries]";
-		break;
-		
-		case 2:
-		StatusText = "[Character]";
-		break;
-		
-		case 3:
-		StatusText = "[GameSeries]";
-		break;
-	}	
-
-}
-
-
 	string headertext = "Amiigo Maker "+StatusText;
+
 	//Draw the Amiibo path text
 	SDL_Surface* HeaderTextSurface = TTF_RenderUTF8_Blended_Wrapped(HeaderFont, headertext.c_str(), TextColour, *Width);
 	SDL_Texture* HeaderTextTexture = SDL_CreateTextureFromSurface(renderer, HeaderTextSurface);
@@ -491,6 +446,11 @@ void CreatorUI::DrawFooter()
 	{
 		if(SeriesList->IsActive)
 		{
+			if(!HasSelectedSeries){
+				indexb1 = SeriesList->SelectedIndex;
+				indexb2 = SeriesList->CursorIndex;
+				indexb3 = SeriesList->ListRenderOffset;
+			}
 			ListSelect();
 		}
 		else
@@ -521,11 +481,11 @@ void CreatorUI::DrawFooter()
 	//Back was pressed
 	if(CheckButtonPressed(&BackFooterRect, TouchX, TouchY))
 	{
-		//Reset some vars so we don't crash
-		SeriesList->ListingTextVec = SeriesVec;
 		SeriesList->SelectedIndex = indexb1 ;
 		SeriesList->CursorIndex = indexb2;
 		SeriesList->ListRenderOffset = indexb3;
+		//Reset some vars so we don't crash
+		SeriesList->ListingTextVec = SeriesVec;
 		HasSelectedSeries = false;
 	}
 	

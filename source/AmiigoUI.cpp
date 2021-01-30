@@ -156,15 +156,14 @@ void AmiigoUI::GetInput()
 							//reset sel img
 							ImgSel = AmiiboList->SelectedIndex+3;
 							//Delete Amiibo. This is temporary until I have time to implement a proper menu for deleting and renaming
-							char PathToAmiibo[FS_MAX_PATH] = ""; //Without assigning we get a random char. Why?
-							strcat(PathToAmiibo, ListDir.c_str());
-							strcat(PathToAmiibo, Files.at(AmiiboList->SelectedIndex).d_name);
+							std::string PathToAmiibo = ListDir + string(Files.at(AmiiboList->SelectedIndex).d_name);
+							
 							//make sure not delete the active amiibo
-							if(strstr(CurrentAmiibo,PathToAmiibo) == NULL){
-								fsdevDeleteDirectoryRecursively(PathToAmiibo);
+							if(strstr(CurrentAmiibo,PathToAmiibo.c_str()) == NULL){
+								fsdevDeleteDirectoryRecursively(PathToAmiibo.c_str());
 								ScanForAmiibos();
 							}
-							remove(PathToAmiibo);
+							remove(PathToAmiibo.c_str());
 						}else if(Event->jbutton.button == 9){
 							MenuList->IsActive = false;
 							AmiiboList->IsActive = true;

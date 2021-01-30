@@ -1,8 +1,10 @@
-![Logo](icon.jpg)
 # Amiigo
+
+![Logo](icon.jpg)
+
 A GUI for Emuiibo. The Emuiibo sysmodule is required in order to use Amiigo.
 
-<a style="display:inline" href="https://github.com/CompSciOrBust/Amiigo/releases"><img src="https://img.shields.io/github/downloads/CompSciOrBust/Amiigo/total?style=for-the-badge" alr = "Downloads " /></a>
+<a href="https://github.com/CompSciOrBust/Amiigo/releases"><img src="https://img.shields.io/github/downloads/CompSciOrBust/Amiigo/total?style=for-the-badge" alr = "Downloads " /></a>
 <a href="https://discord.gg/ZhRn3nn"><img src="https://img.shields.io/discord/673622282790502402?color=green&label=Discord&logo=discord&style=for-the-badge" alt="Discord Server" /></a>
 <a href="https://twitter.com/CompSciOrBust?ref_src=twsrc%5Etfw"><img src="https://img.shields.io/twitter/follow/CompSciOrBust?color=blue&label=follow&logo=twitter&style=for-the-badge" alt="Follow on twitter" /></a>
 
@@ -35,7 +37,7 @@ Left or Right on the D-pad will change which menu is currently selected (used fo
 Up / Down on D-pad to move up and down the list.
 
 * Amiibo List
-
+```
 A to select a Amiibo from the list/ enter in folder.
 
 X toggles emulation state.
@@ -43,17 +45,17 @@ X toggles emulation state.
 B backs out of the folder.
 
 Left stick pressed down (like a button) or \-\- delete an Amiibo
-
+```
 * Amiibo Maker
-
+```
 A create Amiibo
 
 R Download icon from Selected Amiibo
 
-\-\- Change list categories (amiiboSeries, character, gameSeries) / Change Build location (by categories, by amiibo name on selected folder)
+---    Change list categories (amiiboSeries, character, gameSeries) / Change Build location (by categories, by amiibo name on selected folder)
 
 B backs out of the Amiibo series if one is selected in Amiibo Maker.
-
+```
 
 You can also use the touch screen to select an Amiibo by tapping on a item in the list, tapping the emulation status rectangle will toggle the emulation state, and tapping the currently selected Amiibo . Tapping on the right hand list options will change the menu or exit from the app.
 
@@ -61,6 +63,6 @@ You can also use the touch screen to select an Amiibo by tapping on a item in th
 For support please use [Discord](https://discord.io/myrincon) unless you are reporting a bug in which case open a issue here on GitHub.
 
 ## Screenshots
-<img src="Screenshots/Screenshot_1.jpg" width="432"/> <img src="Screenshots/Screenshot_2.jpg" width="432"/>
+<img style="display:inline" src="Screenshots/Screenshot_1.jpg" width="432"/> <img src="Screenshots/Screenshot_2.jpg" width="432"/>
 <img src="Screenshots/Screenshot_3.jpg" width="432"/> <img src="Screenshots/Screenshot_4.jpg" width="432"/>
 <img src="Screenshots/Screenshot_5.jpg" width="432"/> <img src="Screenshots/Screenshot_6.jpg" width="432"/>

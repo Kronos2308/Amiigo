@@ -13,6 +13,7 @@
 #include "Networking.h"
 
 extern bool ThreadReady;
+extern std::string cfgroot;
 //Stolen from Goldleaf
 //Thank you XOR
 std::size_t CurlStrWrite(const char* in, std::size_t size, std::size_t num, std::string* out)
@@ -100,17 +101,17 @@ bool HasConnection()
 void APIDownloader()
 {
 	printf("Open network Thread\n");
-	mkdir("sdmc:/config/amiigo/", 1);
-	mkdir("sdmc:/config/amiigo/IMG", 1);
+	mkdir(cfgroot.c_str(), 0777);
+	mkdir((cfgroot+"IMG").c_str(), 0777);
 	
 	printf("Api Downloader\n");
 	if(HasConnection())//Download Api
 	{
-	RetrieveToFile("https://www.amiiboapi.com/api/amiibo/", "sdmc:/config/amiigo/API.temp");
-		if(CheckFileExists("sdmc:/config/amiigo/API.temp")&(fsize("sdmc:/config/amiigo/API.temp") != 0))
+	RetrieveToFile("https://www.amiiboapi.com/api/amiibo/", cfgroot+"API.temp");
+		if(CheckFileExists(cfgroot+"API.temp")&(fsize(cfgroot+"API.temp") != 0))
 		{
 			string AmiiboAPIString = "";
-			ifstream DataFileReader("sdmc:/config/amiigo/API.temp");
+			ifstream DataFileReader(cfgroot+"API.temp");
 			for(int f = 0; !DataFileReader.eof(); f++)
 			{
 				string TempLine = "";
@@ -120,8 +121,8 @@ void APIDownloader()
 			DataFileReader.close();			
 			if(json::accept(AmiiboAPIString))//check if download is a valid json
 			{
-				remove("sdmc:/config/amiigo/API.json");
-				rename("sdmc:/config/amiigo/API.temp", "sdmc:/config/amiigo/API.json");
+				remove((cfgroot+"API.json").c_str());
+				rename((cfgroot+"API.temp").c_str(), (cfgroot+"API.json").c_str());
 			} else {printf("API.temp invalid\n");}
 		}
 	}
@@ -174,7 +175,7 @@ void Scandownload(string folder)
 				
 				//get amiibo tag and build the File name
 				string AMID = toamii(APIJSData["id"]);
-				string IconCache = "sdmc:/config/amiigo/IMG/icon_"+AMID.substr(0,8)+"-"+AMID.substr(8,16)+".png";
+				string IconCache = cfgroot+"IMG/icon_"+AMID.substr(0,8)+"-"+AMID.substr(8,16)+".png";
 				string iconURL = "https://raw.githubusercontent.com/N3evin/AmiiboAPI/master/images/icon_"+AMID.substr(0,8)+"-"+AMID.substr(8,16)+".png";
 				
 				//if exist local used from there

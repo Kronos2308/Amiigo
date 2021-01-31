@@ -15,6 +15,7 @@
 #include "CreatorUI.h"
 using namespace std;
 using json = nlohmann::json;
+extern std::string cfgroot;
 
 CreatorUI::CreatorUI()
 {
@@ -229,7 +230,7 @@ void CreatorUI::DrawUI()
 	//preview draw                            //bound check
 	if(HasSelectedSeries&SeriesList->IsActive&(SeriesList->SelectedIndex < (int)SortedAmiiboVarsVec.size())){
 		int IndexInJdata = SortedAmiiboVarsVec.at(SeriesList->SelectedIndex).ListIndex;
-		string ImgPath = "sdmc:/config/amiigo/IMG/icon_"+JData["amiibo"][IndexInJdata]["head"].get<std::string>()+"-"+JData["amiibo"][IndexInJdata]["tail"].get<std::string>()+".png";
+		string ImgPath = cfgroot+"IMG/icon_"+JData["amiibo"][IndexInJdata]["head"].get<std::string>()+"-"+JData["amiibo"][IndexInJdata]["tail"].get<std::string>()+".png";
 
 		//download preview by user input
 		if (DownPrev){
@@ -297,12 +298,12 @@ void CreatorUI::ListSelect()
 		} else {
 			AmiiboPath = "sdmc:/emuiibo/amiibo/";//force root if you are not on root
 			AmiiboPath += JData["amiibo"][IndexInJdata][List].get<std::string>()+"_";
-			mkdir(AmiiboPath.c_str(), 0);
+			mkdir(AmiiboPath.c_str(), 0777);
 			AmiiboPath += "/"+ JData["amiibo"][IndexInJdata]["name"].get<std::string>();
 		}
 
  		PleaseWait("Building: "+AmiiboPath.substr(20)+"...");//
-		mkdir(AmiiboPath.c_str(), 0);
+		mkdir(AmiiboPath.c_str(), 0777);
 		
         //Write amiibo.json
 		json JSID = toemu(JData["amiibo"][IndexInJdata]["head"].get<std::string>()+JData["amiibo"][IndexInJdata]["tail"].get<std::string>());
@@ -320,7 +321,7 @@ void CreatorUI::ListSelect()
 		//create icon vars
 		string iconname = AmiiboPath+"/amiibo.png";
 		string icontemp = AmiiboPath+"/amiibo.temp";
-		string iconDBex = "sdmc:/config/amiigo/IMG/icon_"+JData["amiibo"][IndexInJdata]["head"].get<std::string>()+"-"+JData["amiibo"][IndexInJdata]["tail"].get<std::string>()+".png";
+		string iconDBex = cfgroot+"IMG/icon_"+JData["amiibo"][IndexInJdata]["head"].get<std::string>()+"-"+JData["amiibo"][IndexInJdata]["tail"].get<std::string>()+".png";
 		//if exist local used from there
 		if(!CheckFileExists(iconname)&CheckFileExists(iconDBex)&(fsize(iconDBex) != 0)) copy_me(iconDBex, iconname);
 		
@@ -415,7 +416,7 @@ void CreatorUI::GetDataFromAPI()
 {
 	for(int i = 0;i < 3;i++)//wait for the the api
 	{
-		ifstream DataFileReader("sdmc:/config/amiigo/API.json");
+		ifstream DataFileReader(cfgroot+"API.json");
 		for(int f = 0; !DataFileReader.eof(); f++)
 		{
 			string TempLine = "";

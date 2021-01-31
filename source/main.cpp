@@ -15,6 +15,7 @@
 #include <Utils.h>
 bool ThreadReady = false;
 bool g_emuiibo_init_ok = false;
+std::string cfgroot = "sdmc:/switch/Amiigo/";
 int main(int argc, char *argv[])
 {
 romfsInit();
@@ -24,6 +25,13 @@ socketInitializeDefault();
     nxlinkStdio();
     printf("printf output now goes to nxlink server\n");
 #endif
+	//old amiibo path
+	if(CheckFileExists("sdmc:/config/amiigo/API.json")){
+		printf("Moving old files\n");
+		rename("sdmc:/config/amiigo/API.json", (cfgroot+"API.json").c_str());
+		rename("sdmc:/config/amiigo/IMG", (cfgroot+"IMG").c_str());
+		fsdevDeleteDirectoryRecursively("sdmc:/config/amiigo");
+	}
 //start Network thread
 std::thread first = std::thread(APIDownloader);
 
@@ -75,9 +83,7 @@ std::thread first = std::thread(APIDownloader);
 
 	TTF_Init(); //Init the font
 	plInitialize(PlServiceType_User); //Init needed for shared font
-	if (emu::IsAvailable())
-//	nfpemuInitialize(); //Init nfp ipc
-	g_emuiibo_init_ok = R_SUCCEEDED(emu::Initialize());//same
+	if (emu::IsAvailable())	g_emuiibo_init_ok = R_SUCCEEDED(emu::Initialize());//Init nfp emuiibo ipc
 	
 	//Give MainUI access to vars
 	AmiigoUI *MainUI = new AmiigoUI();
@@ -94,8 +100,11 @@ std::thread first = std::thread(APIDownloader);
 	
 	//Make the amiibo folder in case it doesn't exist
 	//Not if it exists checking first feels dirty but it doesn't error out. Should we check anyway?
-	mkdir("sdmc:/emuiibo/", 0);
-	mkdir("sdmc:/emuiibo/amiibo/", 0);
+	mkdir("sdmc:/emuiibo/", 0777);
+	mkdir("sdmc:/emuiibo/amiibo/", 0777);
+	
+
+	
     while (!done)
 	{
 		//Clear the frame
@@ -111,14 +120,14 @@ std::thread first = std::thread(APIDownloader);
 				//If the user has switched to the maker UI and the data isn't read show the please wait message
 				if ((AmiigoGenUI == NULL) & (WindowState == 1))
 				{
-					if (!CheckFileExists("sdmc:/config/amiigo/API.json")&(HasConnection()))
+					if (!CheckFileExists(cfgroot+"API.json")&(HasConnection()))
 					{
 						//Display the please wait message
 						MainUI->PleaseWait("Please wait while we get data from the Amiibo API...");
 						SDL_RenderPresent(renderer);
 						SDL_Delay(2000);
 						//go back if Api isn't ready
-						if (!CheckFileExists("sdmc:/config/amiigo/API.json"))
+						if (!CheckFileExists(cfgroot+"API.json"))
 						WindowState = 0;
 					}
 				}

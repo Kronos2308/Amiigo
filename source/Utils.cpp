@@ -12,10 +12,11 @@
 #include <chrono>
 #include "Utils.h"
 #include "ConvertBase.hpp"
-string IDContents;
-json JEData;
 
 using namespace std;
+string IDContents;
+json JEData;
+extern std::string cfgroot;
 
 int fsize(string fil) {
  std::streampos fsize = 0;
@@ -67,11 +68,11 @@ return 0;
 
 void DrawJsonColorConfig(SDL_Renderer* renderer, string Head)
 {
-	if(CheckFileExists("sdmc:/config/amiigo/config.json"))
+	if(CheckFileExists(cfgroot+"config.json"))
 	{
 		if (IDContents.size() == 0)
 		{
-			ifstream IDReader("sdmc:/config/amiigo/config.json");
+			ifstream IDReader(cfgroot+"config.json");
 				//Read each line
 				printf("Read Json\n");
 				for(int i = 0; !IDReader.eof(); i++)
@@ -90,8 +91,8 @@ void DrawJsonColorConfig(SDL_Renderer* renderer, string Head)
 			}else{
 				//remove bad config
 				IDContents = "";
-				remove("sdmc:/config/amiigo/bad_config.json");
-				rename("sdmc:/config/amiigo/config.json","sdmc:/config/amiigo/bad_config.json");
+				remove((cfgroot+"bad_config.json").c_str());
+				rename((cfgroot+"config.json").c_str(),(cfgroot+"bad_config.json").c_str());
 			}
 		}else{
 //		printf("%s \n",Head.c_str());

@@ -439,11 +439,8 @@ void CreatorUI::GetDataFromAPI()
 		for(int r = 0; r < JDataSize; r++)
 		{
 			if ((JData["amiibo"][i]["name"] == JData["amiibo"][r]["name"])&(r != i)){
-				printf("Duplicated int\n");
-				std::string data = JData["amiibo"][r]["name"].get<std::string>();
-				printf("Duplicated: %s\n",data.c_str());
+				std::string data = JData["amiibo"][r]["name"];
 				data.insert(data.length(), w, '_');
-				printf("Duplicated-: %s\n",data.c_str());
 				JData["amiibo"][r]["name"] = data;
 				w++;
 			}

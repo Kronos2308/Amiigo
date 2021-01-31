@@ -38,8 +38,8 @@ void CreatorUI::Createlist()
 	switch(Ordetype)
 	{
 		case 1:	List = "amiiboSeries"; break;
-		case 2: List = "character"; break;
-		case 3: List = "gameSeries"; break;
+		case 2: List = "gameSeries"; break;
+		case 3: List = "character"; break;
 	}	
 	//Get all of the Series' names and add Amiibos to the AmiiboVarsVec
 	for(int i = 0; i < JDataSize; i++)
@@ -395,8 +395,8 @@ void CreatorUI::DrawHeader()
 		switch(Ordetype)
 		{
 			case 1: StatusText = "[AmiiboSeries]"; break;
-			case 2: StatusText = "[Character]"; break;
-			case 3: StatusText = "[GameSeries]"; break;
+			case 2: StatusText = "[GameSeries]"; break;
+			case 3: StatusText = "[Character]"; break;
 		}	
 	}
 	string headertext = "Amiigo Maker "+StatusText;
@@ -431,6 +431,39 @@ void CreatorUI::GetDataFromAPI()
 		JData = json::parse(AmiiboAPIString);
 		JDataSize = JData["amiibo"].size();
 	}
+	
+	//Check and Correct Duplicated names on API
+	for(int i = 0; i < JDataSize; i++)
+	{
+		int w = 1;
+		for(int r = 0; r < JDataSize; r++)
+		{
+			if ((JData["amiibo"][i]["name"] == JData["amiibo"][r]["name"])&(r != i)){
+				printf("Duplicated int\n");
+				std::string data = JData["amiibo"][r]["name"].get<std::string>();
+				printf("Duplicated: %s\n",data.c_str());
+				data.insert(data.length(), w, '_');
+				printf("Duplicated-: %s\n",data.c_str());
+				JData["amiibo"][r]["name"] = data;
+				w++;
+			}
+		}
+	}
+	
+	//Order by type
+	json TempJS;
+	int t = 0;
+	for(int e = 0; e < JDataSize; e++) //Figures First
+		if (JData["amiibo"][e]["type"].get<std::string>() == "Figure"){TempJS["amiibo"][t] = JData["amiibo"][e]; t++;}
+		
+	for(int e = 0; e < JDataSize; e++)//Cards Second
+		if (JData["amiibo"][e]["type"].get<std::string>() == "Card"){TempJS["amiibo"][t] = JData["amiibo"][e]; t++;}
+
+	for(int e = 0; e < JDataSize; e++)//The Rest
+		if ((JData["amiibo"][e]["type"].get<std::string>() != "Card")&(JData["amiibo"][e]["type"].get<std::string>() != "Figure"))
+		{TempJS["amiibo"][t] = JData["amiibo"][e]; t++;}
+
+	JData = TempJS;
 }
 
 void CreatorUI::DrawFooter()

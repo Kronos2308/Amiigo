@@ -58,6 +58,7 @@ CFLAGS	:=	-g -Wall -O2 -ffunction-sections \
 CFLAGS	+=	$(INCLUDE) -D__SWITCH__ -DVERSION='"$(APP_VERSION)"' -DTITLE='"$(APP_TITLE)"' `sdl2-config --cflags`
 ifneq ($(strip $(DEBUG)),)
 CFLAGS	+= -DDEBUG
+APP_TITLE += debug
 endif
 
 CXXFLAGS	:= $(CFLAGS) -fno-rtti -fno-exceptions

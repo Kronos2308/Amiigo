@@ -25,13 +25,13 @@ socketInitializeDefault();
     nxlinkStdio();
     printf("printf output now goes to nxlink server\n");
 #endif
-	//old amiibo path
-	if(CheckFileExists("sdmc:/config/amiigo/API.json")){
-		printf("Moving old files\n");
-		rename("sdmc:/config/amiigo/API.json", (cfgroot+"API.json").c_str());
-		rename("sdmc:/config/amiigo/IMG", (cfgroot+"IMG").c_str());
-		fsdevDeleteDirectoryRecursively("sdmc:/config/amiigo");
-	}
+//old amiibo path
+if(CheckFileExists("sdmc:/config/amiigo/API.json")){
+	printf("Moving old files\n");
+	rename("sdmc:/config/amiigo/API.json", (cfgroot+"API.json").c_str());
+	rename("sdmc:/config/amiigo/IMG", (cfgroot+"IMG").c_str());
+	fsdevDeleteDirectoryRecursively("sdmc:/config/amiigo");
+}
 //start Network thread
 std::thread first = std::thread(APIDownloader);
 

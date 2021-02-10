@@ -40,7 +40,7 @@ void AmiigoUI::GetInput()
 	//Scan input
 	while (SDL_PollEvent(Event))
 		{
-		printf("Select:%d Cursor:%d Offset:%d Size %d\n",SeriesList->SelectedIndex,SeriesList->CursorIndex,SeriesList->ListRenderOffset,listsize);
+		printf("Select:%d Cursor:%d Offset:%d Size %u\n",AmiiboList->SelectedIndex,AmiiboList->CursorIndex,AmiiboList->ListRenderOffset,Files.size());
             switch (Event->type)
 			{
 				//Screen swipe

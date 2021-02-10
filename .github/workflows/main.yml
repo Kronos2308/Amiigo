@@ -22,9 +22,10 @@ jobs:
         export DEVKITARM=${DEVKITPRO}/devkitARM
         export DEVKITPPC=${DEVKITPRO}/devkitPPC
         export PATH=${DEVKITPRO}/tools/bin:$PATH
+        export DEBUG=true
         make -j$(nproc)
         
     - uses: actions/upload-artifact@master
       with:
-        name: Build
+        name: Debug-Build
         path: Amiigo.nro

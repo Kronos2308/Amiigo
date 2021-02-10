@@ -16,6 +16,8 @@
 using namespace std;
 using json = nlohmann::json;
 extern std::string cfgroot;
+extern PadState pad;
+static bool isswiping;
 
 CreatorUI::CreatorUI()
 {
@@ -87,117 +89,187 @@ void CreatorUI::InitList()
 
 void CreatorUI::GetInput()
 {
+	int listsize;if (HasSelectedSeries ) {listsize = SortedAmiiboVarsVec.size();} else {listsize = SeriesVec.size();} ;
 	//Scan input
 	while (SDL_PollEvent(Event))
+	{
+		printf("Select:%d Cursor:%d Offset:%d Size %d\n",SeriesList->SelectedIndex,SeriesList->CursorIndex,SeriesList->ListRenderOffset,listsize);
+		//printf("Button-ID-%d-\n",Event->jbutton.button);
+        switch (Event->type)
 		{
-			//printf("Button-ID-%d-\n",Event->jbutton.button);
-            switch (Event->type)
-			{
-				//Touchscreen
-				case SDL_FINGERDOWN:
-				TouchX = Event->tfinger.x * *Width;
-				TouchY = Event->tfinger.y * *Height;
-				//Set the touch list pointers because we need them to work in both menus
-				MenuList->TouchListX = &TouchX;
-				MenuList->TouchListY = &TouchY;
-				break;
-				//Joycon button pressed
-                case SDL_JOYBUTTONDOWN:
-                    if (Event->jbutton.which == 0)
+			//Screen swipe
+			case SDL_FINGERMOTION:
+			if(SeriesList->IsActive && listsize > 10){
+				//Swipe threshold, triger for lock touch
+				if(Event->tfinger.dy * *Height > 3 || Event->tfinger.dy * *Height < -3) {isswiping = true;}
+				
+				//swipe down go up
+				if(Event->tfinger.dy * *Height > 7)
+				{
+					if (SeriesList->ListRenderOffset > 0) {
+						SeriesList->CursorIndex = 0;
+						SeriesList->ListRenderOffset--;
+						SeriesList->SelectedIndex = SeriesList->ListRenderOffset;
+					} //else SeriesList->CursorIndex=0;
+				}
+				//swipe up go down
+				else if(Event->tfinger.dy * *Height < -7)
+				{
+					if (SeriesList->ListRenderOffset < (listsize-10)) {
+						SeriesList->ListRenderOffset++;
+						SeriesList->SelectedIndex = SeriesList->ListRenderOffset +8;
+						SeriesList->CursorIndex=8;
+					} //else SeriesList->CursorIndex=8;
+				}
+			}
+			break;
+			//Touchscreen
+			case SDL_FINGERUP:
+			if (isswiping){isswiping=false; break;}
+			TouchX = Event->tfinger.x * *Width;
+			TouchY = Event->tfinger.y * *Height;
+			//Set the touch list pointers because we need them to work in both menus
+			MenuList->TouchListX = &TouchX;
+			MenuList->TouchListY = &TouchY;
+			break;
+			case SDL_FINGERDOWN:
+			if (isswiping){isswiping=false; break;}
+			break;
+			//Joycon button pressed
+               case SDL_JOYBUTTONDOWN:
+                if (Event->jbutton.which == 0)
+				{
+					//Plus pressed
+					if (Event->jbutton.button == 10)
 					{
-						//Plus pressed
-						if (Event->jbutton.button == 10)
-						{
-                            *IsDone = 1;
-                        }
-						//L pressed preview
-						else if(Event->jbutton.button == 7)
-						{
-							if(SeriesList->IsActive&HasSelectedSeries) {DownPrev = 1;}
-						}
-						//Up pressed
-						else if(Event->jbutton.button == 13||Event->jbutton.button == 17)
-						{
-							if(SeriesList->IsActive)
-							{
-								SeriesList->CursorIndex--;
-								SeriesList->SelectedIndex--;
-							}
-							else
-							{
-								MenuList->CursorIndex--;
-								MenuList->SelectedIndex--;
-							}
-						}
-						//Down pressed
-						else if(Event->jbutton.button == 15||Event->jbutton.button == 19)
-						{
-							if(SeriesList->IsActive)
-							{
-								SeriesList->CursorIndex++;
-								SeriesList->SelectedIndex++;
-							}
-							else
-							{
-								MenuList->CursorIndex++;
-								MenuList->SelectedIndex++;
-							}
-						}
-						//Left or right pressed
-						else if(Event->jbutton.button == 12 || Event->jbutton.button == 14|| Event->jbutton.button == 16|| Event->jbutton.button == 18)
-						{
-							MenuList->IsActive = SeriesList->IsActive;
-							SeriesList->IsActive = !SeriesList->IsActive;
-						}
-						//A pressed
-						else if(Event->jbutton.button == 0)
-						{
-							if(SeriesList->IsActive)
-							{
-								if(!HasSelectedSeries){
-									indexb1 = SeriesList->SelectedIndex;
-									indexb2 = SeriesList->CursorIndex;
-									indexb3 = SeriesList->ListRenderOffset;
-								}
-								ListSelect();
-							}
-							else
-							{
-								*WindowState = MenuList->SelectedIndex;
-							}
-						}
-						//B pressed
-						else if(Event->jbutton.button == 1)
-						{
-							//Reset some vars so we don't crash
-							SeriesList->ListingTextVec = SeriesVec;
-							SeriesList->SelectedIndex = indexb1 ;
-							SeriesList->CursorIndex = indexb2;
-							SeriesList->ListRenderOffset = indexb3;
-							HasSelectedSeries = false;
-						}else if(Event->jbutton.button == 11)
-						{
-							if(HasSelectedSeries){Creatype = !Creatype;}
-							else
-							{//change series
-								SeriesList->SelectedIndex = 0;
-								SeriesList->CursorIndex = 0;
-								SeriesList->ListRenderOffset = 0;
-								Ordetype++; if(Ordetype > 3) {Ordetype = 1;}
-								CreatorUI::Createlist();
-								CreatorUI::InitList();
-							}
-						}else if(Event->jbutton.button == 8){
-							MenuList->IsActive = false;
-							SeriesList->IsActive = true;
-							*WindowState = 0;
-						}
-						
-
+                           *IsDone = 1;
                     }
-                    break;
-            }
+					//L pressed preview
+					else if(Event->jbutton.button == 7)
+					{
+						if(SeriesList->IsActive&HasSelectedSeries) {DownPrev = 1;}
+					}
+					//Up pressed
+					else if(Event->jbutton.button == 13)
+					{
+						if(SeriesList->IsActive)
+						{
+							SeriesList->CursorIndex--;
+							SeriesList->SelectedIndex--;
+						}
+						else
+						{
+							MenuList->CursorIndex--;
+							MenuList->SelectedIndex--;
+						}
+					}
+					//Down pressed
+					else if(Event->jbutton.button == 15)
+					{
+						if(SeriesList->IsActive)
+						{
+							SeriesList->CursorIndex++;
+							SeriesList->SelectedIndex++;
+						}
+						else
+						{
+							MenuList->CursorIndex++;
+							MenuList->SelectedIndex++;
+						}
+					}
+					//Left or right pressed
+					else if(Event->jbutton.button == 12 || Event->jbutton.button == 14|| Event->jbutton.button == 16|| Event->jbutton.button == 18)
+					{
+						MenuList->IsActive = SeriesList->IsActive;
+						SeriesList->IsActive = !SeriesList->IsActive;
+					}
+					//A pressed
+					else if(Event->jbutton.button == 0)
+					{
+						if(SeriesList->IsActive)
+						{
+							if(!HasSelectedSeries){
+								indexb1 = SeriesList->SelectedIndex;
+								indexb2 = SeriesList->CursorIndex;
+								indexb3 = SeriesList->ListRenderOffset;
+							}
+							ListSelect();
+						}
+						else
+						{
+							*WindowState = MenuList->SelectedIndex;
+						}
+					}
+				//B pressed
+				else if(Event->jbutton.button == 1)
+				{
+					//Reset some vars so we don't crash
+						SeriesList->ListingTextVec = SeriesVec;
+						SeriesList->SelectedIndex = indexb1 ;
+						SeriesList->CursorIndex = indexb2;
+						SeriesList->ListRenderOffset = indexb3;
+						HasSelectedSeries = false;
+					}else if(Event->jbutton.button == 11)
+					{
+						if(HasSelectedSeries){Creatype = !Creatype;}
+						else
+						{//change series
+							SeriesList->SelectedIndex = 0;
+							SeriesList->CursorIndex = 0;
+							SeriesList->ListRenderOffset = 0;
+							Ordetype++; if(Ordetype > 3) {Ordetype = 1;}
+							CreatorUI::Createlist();
+							CreatorUI::InitList();
+						}
+					}else if(Event->jbutton.button == 8){
+						MenuList->IsActive = false;
+						SeriesList->IsActive = true;
+						*WindowState = 0;
+					}
+					
+                }
+                break;
         }
+    }
+	//stick control using libnx pad sintax
+	padUpdate(&pad);
+    u64 KeyHeld = padGetButtons(&pad);
+    u64 KeyDown = padGetButtonsDown(&pad);
+	if(SeriesList->IsActive){
+        if(KeyHeld & HidNpadButton_StickLUp) {
+			SeriesList->CursorIndex--;
+			SeriesList->SelectedIndex--;
+        }
+        else if(KeyHeld & HidNpadButton_StickLDown) {
+			SeriesList->CursorIndex++;
+			SeriesList->SelectedIndex++;
+        }
+	} else {
+        if(KeyDown & HidNpadButton_StickLUp) {
+			MenuList->CursorIndex--;
+			MenuList->SelectedIndex--;
+        }
+        else if(KeyDown & HidNpadButton_StickLDown) {
+			MenuList->CursorIndex++;
+			MenuList->SelectedIndex++;
+        }
+	}
+	//Check if list item selected via touch screen
+	if(SeriesList->ItemSelected)
+	{
+	if (SeriesList->SelectedIndex > listsize-1){
+		SeriesList->CursorIndex--;
+		SeriesList->SelectedIndex--;
+	}//limit var to evoid a crash, get here by touch screen
+		MenuList->IsActive = false;
+		SeriesList->IsActive = true;
+	}
+	else if(MenuList->ItemSelected)
+	{
+		*WindowState = MenuList->SelectedIndex;
+		MenuList->IsActive = true;
+		SeriesList->IsActive = false;
+	}
 }
 
 void CreatorUI::DrawUI()
@@ -244,10 +316,10 @@ void CreatorUI::DrawUI()
 			DownPrev = 0;
 		}
 		//load prev img	
-		if (imgres != SeriesList->SelectedIndex)
+		if (imgres != SeriesList->SelectedIndex && !isswiping)
 		{
 			imgres = SeriesList->SelectedIndex;
-			if(CheckFileExists(ImgPath)&(fsize(ImgPath) != 0)) PrevIcon = IMG_Load(ImgPath.c_str()); else PrevIcon = IMG_Load("romfs:/download.png");	
+			if(CheckFileExists(ImgPath)&(fsize(ImgPath) != 0)){PrevIcon = IMG_Load(ImgPath.c_str()); }else PrevIcon = IMG_Load("romfs:/download.png");	
 			//printf("%s\n",ImgPath.c_str());
 		}
 
@@ -266,18 +338,7 @@ void CreatorUI::DrawUI()
 	//printf("%d - %d\n",SeriesList->SelectedIndex, SeriesList->CursorIndex);
 
 	DrawButtonBorders(renderer, SeriesList, MenuList, HeaderHeight, FooterHeight, *Width, *Height, true);
-	//Check if list item selected via touch screen
-	if(SeriesList->ItemSelected)
-	{
-		MenuList->IsActive = false;
-		SeriesList->IsActive = true;
-	}
-	else if(MenuList->ItemSelected)
-	{
-		*WindowState = MenuList->SelectedIndex;
-		MenuList->IsActive = true;
-		SeriesList->IsActive = false;
-	}
+
 	ScrollBarDraw(renderer, (HasSelectedSeries ? SortedAmiiboVarsVec.size() : SeriesVec.size()),SeriesList->SelectedIndex,SeriesList->IsActive);
 
 	//Reset touch coords

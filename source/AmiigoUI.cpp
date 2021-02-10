@@ -12,6 +12,8 @@
 using namespace std;
 using json = nlohmann::json;
 extern bool g_emuiibo_init_ok;
+extern PadState pad;
+static bool isswiping;
 
 AmiigoUI::AmiigoUI()
 {
@@ -38,31 +40,50 @@ void AmiigoUI::GetInput()
 	//Scan input
 	while (SDL_PollEvent(Event))
 		{
+		printf("Select:%d Cursor:%d Offset:%d Size %d\n",SeriesList->SelectedIndex,SeriesList->CursorIndex,SeriesList->ListRenderOffset,listsize);
             switch (Event->type)
 			{
+				//Screen swipe
+				 
+				case SDL_FINGERMOTION:
+				if(AmiiboList->IsActive && (int)Files.size() > 10){
+					//Swipe threshold, triger for lock touch
+					if(Event->tfinger.dy * *Height > 3 || Event->tfinger.dy * *Height < -3) {isswiping = true;}
+				
+					//swipe down go up
+					if(Event->tfinger.dy * *Height > 7)
+					{
+						if (AmiiboList->ListRenderOffset > 0) {
+							AmiiboList->CursorIndex = 0;
+							AmiiboList->ListRenderOffset--;
+							AmiiboList->SelectedIndex =  AmiiboList->ListRenderOffset;
+						} //else AmiiboList->CursorIndex=0;
+					}
+					//swipe up go down
+					else if(Event->tfinger.dy * *Height < -7)
+					{
+						if (AmiiboList->ListRenderOffset < ((int)Files.size()-10)) {
+							AmiiboList->ListRenderOffset++;
+							AmiiboList->SelectedIndex = AmiiboList->ListRenderOffset +9;
+							AmiiboList->CursorIndex=9;
+						} //else AmiiboList->CursorIndex=9;
+					}
+				}
+				break;
+
 				//Touchscreen
-				case SDL_FINGERDOWN:
+				case SDL_FINGERUP:
+				if (isswiping){isswiping=false; break;}
 				TouchX = Event->tfinger.x * *Width;
 				TouchY = Event->tfinger.y * *Height;
 				//Set the touch list pointers because we need them to work in both menus
 				MenuList->TouchListX = &TouchX;
 				MenuList->TouchListY = &TouchY;
 				break;
-				//TODO: Fix swiping
-				/*case SDL_FINGERMOTION:
-				//swipe down
-				if(Event->tfinger.dy * *Height > 0.25)
-				{
-					CursorIndex++;
-					SelectedIndex++;
-				}
-				//swipe up
-				else if(Event->tfinger.dy * *Height > 0.25)
-				{
-					CursorIndex++;
-					SelectedIndex++;
-				}
-				break;*/
+				case SDL_FINGERDOWN:
+				if (isswiping){isswiping=false; break;}
+				break;
+				
 				//Joycon button pressed
                 case SDL_JOYBUTTONDOWN:
                     if (Event->jbutton.which == 0)
@@ -90,13 +111,13 @@ void AmiigoUI::GetInput()
 							}
 
                         }
-						//Y pressed ToDo 
+						//Y meme 
 						else if(Event->jbutton.button == 3)
 						{
 							SelAmiibo = IMG_Load("romfs:/SuperPro.png");
 						}
 						//Up pressed
-						else if(Event->jbutton.button == 13||Event->jbutton.button == 17)
+						else if(Event->jbutton.button == 13)
 						{
 							if(AmiiboList->IsActive)
 							{
@@ -110,7 +131,7 @@ void AmiigoUI::GetInput()
 							}
 						}
 						//Down pressed
-						else if(Event->jbutton.button == 15||Event->jbutton.button == 19)
+						else if(Event->jbutton.button == 15 )
 						{
 							if(AmiiboList->IsActive)
 							{
@@ -172,7 +193,30 @@ void AmiigoUI::GetInput()
                     break;
             }
         }
-		
+	//stick control using libnx pad sintax
+	padUpdate(&pad);
+    u64 KeyHeld = padGetButtons(&pad);
+    u64 KeyDown = padGetButtonsDown(&pad);
+	if(AmiiboList->IsActive){
+        if(KeyHeld & HidNpadButton_StickLUp) {
+			AmiiboList->CursorIndex--;
+			AmiiboList->SelectedIndex--;
+        }
+        else if(KeyHeld & HidNpadButton_StickLDown) {
+			AmiiboList->CursorIndex++;
+			AmiiboList->SelectedIndex++;
+        }
+	} else {
+        if(KeyDown & HidNpadButton_StickLUp) {
+			MenuList->CursorIndex--;
+			MenuList->SelectedIndex--;
+        }
+        else if(KeyDown & HidNpadButton_StickLDown) {
+			MenuList->CursorIndex++;
+			MenuList->SelectedIndex++;
+        }
+	}
+
 	//Check if list item selected via touch screen
 	if(AmiiboList->ItemSelected)
 	{
@@ -181,7 +225,7 @@ void AmiigoUI::GetInput()
 		AmiiboList->SelectedIndex--;
 		ImgSel = AmiiboList->SelectedIndex;
 	}//limit var to evoid a crash, get here by touch screen
-		SetAmiibo(AmiiboList->SelectedIndex);
+		if(AmiiboList->IsActive) SetAmiibo(AmiiboList->SelectedIndex);
 		MenuList->IsActive = false;
 		AmiiboList->IsActive = true;
 	}
@@ -218,7 +262,7 @@ void AmiigoUI::DrawUI()
 	
 	//load the preview image for the amiibo 
 	int maxL =  Files.size()-1;
-	if ((AmiiboList->SelectedIndex != ImgSel)&AmiiboList->IsActive)
+	if ((AmiiboList->SelectedIndex != ImgSel)&AmiiboList->IsActive&!isswiping)
 	{
 		if (maxL >= 0)
 		{

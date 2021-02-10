@@ -16,6 +16,8 @@
 bool ThreadReady = false;
 bool g_emuiibo_init_ok = false;
 std::string cfgroot = "sdmc:/switch/Amiigo/";
+PadState pad;
+
 int main(int argc, char *argv[])
 {
 romfsInit();
@@ -49,6 +51,9 @@ std::thread first = std::thread(APIDownloader);
         return -1;
     }
 
+	//setup pad
+	padConfigureInput(1, HidNpadStyleSet_NpadStandard);
+    padInitializeDefault(&pad);
     // create an SDL window (OpenGL ES2 always enabled)
     // when SDL_FULLSCREEN flag is not set, viewport is automatically handled by SDL (use SDL_SetWindowSize to "change resolution")
     // available switch SDL2 video modes :

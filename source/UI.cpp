@@ -84,12 +84,12 @@ void ScrollList::DrawList()
 	for(int i = 0; i < ListLength; i++)
 	{
 		//Set the background color
-		if(IsActive) DrawJsonColorConfig(renderer, "UI_background");
-		else DrawJsonColorConfig(renderer, "UI_background_alt");
+		if(IsActive) SDL_SetRenderDrawColor(renderer,136 ,254 ,254 ,255);//DrawJsonColorConfig(renderer, "UI_background");
+		else SDL_SetRenderDrawColor(renderer,0 ,178 ,212 ,255);//DrawJsonColorConfig(renderer, "UI_background_alt");
 		//Check if this is the highlighted file
 		if(i == CursorIndex && IsActive)
 		{
-			DrawJsonColorConfig(renderer, "UI_cursor");
+			SDL_SetRenderDrawColor(renderer,255 ,255 ,255 ,255);//DrawJsonColorConfig(renderer, "UI_cursor");
 			//Cyan 50
 			//if(IsActive) SDL_SetRenderDrawColor(renderer, 224, 247, 250, 255);
 			//else SDL_SetRenderDrawColor(renderer, 232, 234, 246, 255); //Indigo
@@ -117,7 +117,7 @@ void ScrollList::DrawList()
 		SDL_RenderCopy(renderer, FileNameTexture, NULL, &AmiiboNameRect);
 		
 		//Draw borders
-		DrawJsonColorConfig(renderer, "UI_borders_list");
+		SDL_SetRenderDrawColor(renderer,0 ,0 ,0 ,255);//DrawJsonColorConfig(renderer, "UI_borders_list");
 		SDL_Rect BorderRect = {ListXOffset, ListYOffset + (i * ListingHeight) - 1, ListWidth, BorderSize};
 		SDL_RenderFillRect(renderer, &BorderRect);
 		//Check if we need to draw one more border
@@ -152,7 +152,7 @@ TTF_Font *GetSharedFont(int FontSize)
 
 void DrawButtonBorders(SDL_Renderer* renderer, ScrollList *LeftList, ScrollList *MenuList, int HeaderHeight, int FooterHeight, int Width, int Height, bool SplitFooter)
 {
-	DrawJsonColorConfig(renderer, "UI_borders");
+	SDL_SetRenderDrawColor(renderer,0 ,0 ,0 ,255);//DrawJsonColorConfig(renderer, "UI_borders");
 	//Draw border for the two lists
 	SDL_Rect BorderRect = {MenuList->ListXOffset, MenuList->ListYOffset, BorderSize, MenuList->ListHeight};
 	SDL_RenderFillRect(renderer, &BorderRect);
@@ -172,15 +172,15 @@ void ScrollBarDraw(SDL_Renderer* renderer, int Total, int Select,bool Activate){
 	if ((Total > 9)&Activate){
 		//split the distance in peaces and get exact values
 		double Texact = Total;
-		double Bar = 580/Texact;
+		double Bar = 576/Texact;
 		
 		//Get approximate values, 1 pixel of error
 		int BarSize = Bar + 1;       //approximate Size
 		int BarPos  = Bar*Select+74; //approximate Position
 		
 		//Draw the ScrollBar
-		SDL_SetRenderDrawColor(renderer, 255, 255, 255, 255);
-		SDL_Rect HeaderRect = {961, BarPos, 1, BarSize};
+		SDL_SetRenderDrawColor(renderer, 190, 190, 190, 255);
+		SDL_Rect HeaderRect = {960, BarPos, 3, BarSize};
 		SDL_RenderFillRect(renderer, &HeaderRect);
 	}
 }

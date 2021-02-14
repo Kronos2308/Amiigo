@@ -240,7 +240,7 @@ void AmiigoUI::GetInput()
 void AmiigoUI::DrawUI()
 {		
 	//Draw the BG
-	DrawJsonColorConfig(renderer, "AmiigoUI_DrawUI");
+	SDL_SetRenderDrawColor(renderer,94 ,94 ,94 ,255);//DrawJsonColorConfig(renderer, "AmiigoUI_DrawUI");
 	SDL_Rect BGRect = {0,0, *Width, *Height};
 	SDL_RenderFillRect(renderer, &BGRect);
 	
@@ -288,8 +288,8 @@ void AmiigoUI::DrawUI()
 		
 	if (maxL >= 0)
 	{
-		DrawJsonColorConfig(renderer, "UI_borders_list");
-		//SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
+		//DrawJsonColorConfig(renderer, "UI_borders_list");
+		SDL_SetRenderDrawColor(renderer, 0, 0, 0, 255);
 		SDL_Rect HeaderRect = {690,73, 270, 286};
 		SDL_RenderFillRect(renderer, &HeaderRect);
 		
@@ -317,7 +317,7 @@ void AmiigoUI::DrawUI()
 void AmiigoUI::DrawHeader()
 {
 	//Draw the header
-	DrawJsonColorConfig(renderer, "AmiigoUI_DrawHeader");
+	SDL_SetRenderDrawColor(renderer,0 ,188 ,212 ,255);//DrawJsonColorConfig(renderer, "AmiigoUI_DrawHeader");
 	SDL_Rect HeaderRect = {0,0, *Width, HeaderHeight};
 	SDL_RenderFillRect(renderer, &HeaderRect);
 	//Get the Amiibo path
@@ -418,10 +418,10 @@ void AmiigoUI::DrawFooter()
 		{
 			case emu::EmulationStatus::On:
 			StatusText = "On";
-			DrawJsonColorConfig(renderer, "AmiigoUI_DrawFooter_0");
+			SDL_SetRenderDrawColor(renderer,0 ,255 ,0 ,255);//DrawJsonColorConfig(renderer, "AmiigoUI_DrawFooter_0");
 			break;
 			case emu::EmulationStatus::Off:
-			DrawJsonColorConfig(renderer, "AmiigoUI_DrawFooter_2");
+			SDL_SetRenderDrawColor(renderer,255 ,0 ,0 ,255);//DrawJsonColorConfig(renderer, "AmiigoUI_DrawFooter_2");
 			StatusText = "Off";
 			break;
 		}
@@ -440,7 +440,7 @@ void AmiigoUI::DrawFooter()
 			}
 		}
 	}else{
-		DrawJsonColorConfig(renderer, "AmiigoUI_DrawFooter_3");
+		SDL_SetRenderDrawColor(renderer,255 ,255 ,0 ,255);//DrawJsonColorConfig(renderer, "AmiigoUI_DrawFooter_3");
 		StatusText = "Emuiibo not loaded";
 		static bool march = true;
 		if (march)
@@ -530,7 +530,7 @@ void AmiigoUI::PleaseWait(string mensage)
 {
 	SDL_Surface* MessageTextSurface = TTF_RenderUTF8_Blended_Wrapped(HeaderFont, mensage.c_str(), TextColour, *Width);
 	//Draw the rect
-	DrawJsonColorConfig(renderer, "AmiigoUI_PleaseWait");
+	SDL_SetRenderDrawColor(renderer,0 ,188 ,212 ,255);//DrawJsonColorConfig(renderer, "AmiigoUI_PleaseWait");
 	SDL_Rect MessageRect = {((*Width - MessageTextSurface->w) / 2)-3,((*Height - MessageTextSurface->h) / 2)-3, (MessageTextSurface->w)+3, (MessageTextSurface->h)+3};
 	SDL_RenderFillRect(renderer, &MessageRect);
 
@@ -544,7 +544,7 @@ void AmiigoUI::PleaseWait(string mensage)
 	SDL_RenderPresent(renderer);
 /*
 	//Draw the rect
-	DrawJsonColorConfig(renderer, "AmiigoUI_PleaseWait");
+	SDL_SetRenderDrawColor(renderer,0 ,188 ,212 ,255);//DrawJsonColorConfig(renderer, "AmiigoUI_PleaseWait");
 	SDL_Rect MessageRect = {0,0, *Width, *Height};
 	SDL_RenderFillRect(renderer, &MessageRect);
 	//Draw the please wait text

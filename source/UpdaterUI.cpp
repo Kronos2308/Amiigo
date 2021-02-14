@@ -172,7 +172,7 @@ bool UpdaterUI::CheckForNewVersion()
 void UpdaterUI::DrawText(std::string Message)
 {
 	//Draw the rect
-	DrawJsonColorConfig(renderer, "UpdaterUI_DrawText");
+	SDL_SetRenderDrawColor(renderer, 0, 188, 212, 255);//DrawJsonColorConfig(renderer, "UpdaterUI_DrawText");
 	SDL_Rect MessageRect = {0,0, *Width, *Height};
 	SDL_RenderFillRect(renderer, &MessageRect);
 	//Draw the text

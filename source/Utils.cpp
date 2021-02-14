@@ -65,7 +65,32 @@ bool copy_me(string origen, string destino) {
 	}
 return 0;
 }
+//tryng to tranlate the emuiibo id from amiibo id, WIP
+json toemu(std::string ID){
+	json JSID;
+	printf("AmiiboID: %s \n",ID.c_str());
+	JSID["game_character_id"] = std::stoi( shiftAndDec( ID.substr(0,4) ) );
+	JSID["character_variant"] = std::stoi( ConvertBase(ID.substr(4,2),  16, 10) );
+	JSID["figure_type"] = std::stoi( ConvertBase(ID.substr(6,2),  16, 10) );
+	JSID["model_number"] = std::stoi( ConvertBase(ID.substr(8,4),  16, 10) );
+	JSID["series"] = std::stoi( ConvertBase(ID.substr(12,2),  16, 10) );
+	return JSID;
+}
 
+std::string toamii(json JSID)
+{
+	//get and convert the values in json and concatenate to form the ID
+	string ID = 
+	refill(shiftAndHex( std::to_string(JSID["game_character_id"].get<int>()) ),4)+
+	refill(ConvertBase( std::to_string(JSID["character_variant"].get<int>()),10,16),2)+
+	refill(ConvertBase( std::to_string(JSID["figure_type"].get<int>()),10,16),2)+
+	refill(ConvertBase( std::to_string(JSID["model_number"].get<int>()),10,16),4)+
+	refill(ConvertBase( std::to_string(JSID["series"].get<int>()),10,16),2)+
+	"02";
+	printf("AmiiboID: %s -\n",ID.c_str());
+	return ID;
+}
+/*
 void DrawJsonColorConfig(SDL_Renderer* renderer, string Head)
 {
 	if(CheckFileExists(cfgroot+"config.json"))
@@ -129,28 +154,3 @@ void DrawJsonColorConfig(SDL_Renderer* renderer, string Head)
 	}
 }
 
-//tryng to tranlate the emuiibo id from amiibo id, WIP
-json toemu(std::string ID){
-	json JSID;
-	printf("AmiiboID: %s \n",ID.c_str());
-	JSID["game_character_id"] = std::stoi( shiftAndDec( ID.substr(0,4) ) );
-	JSID["character_variant"] = std::stoi( ConvertBase(ID.substr(4,2),  16, 10) );
-	JSID["figure_type"] = std::stoi( ConvertBase(ID.substr(6,2),  16, 10) );
-	JSID["model_number"] = std::stoi( ConvertBase(ID.substr(8,4),  16, 10) );
-	JSID["series"] = std::stoi( ConvertBase(ID.substr(12,2),  16, 10) );
-	return JSID;
-}
-
-std::string toamii(json JSID)
-{
-	//get and convert the values in json and concatenate to form the ID
-	string ID = 
-	refill(shiftAndHex( std::to_string(JSID["game_character_id"].get<int>()) ),4)+
-	refill(ConvertBase( std::to_string(JSID["character_variant"].get<int>()),10,16),2)+
-	refill(ConvertBase( std::to_string(JSID["figure_type"].get<int>()),10,16),2)+
-	refill(ConvertBase( std::to_string(JSID["model_number"].get<int>()),10,16),4)+
-	refill(ConvertBase( std::to_string(JSID["series"].get<int>()),10,16),2)+
-	"02";
-	printf("AmiiboID: %s -\n",ID.c_str());
-	return ID;
-}

@@ -282,7 +282,7 @@ void CreatorUI::DrawUI()
 	SeriesList->ListYOffset = HeaderHeight;
 		
 	//Draw the BG
-	DrawJsonColorConfig(renderer, "CreatorUI_DrawUI");
+	SDL_SetRenderDrawColor(renderer, 94, 94, 94, 255);//DrawJsonColorConfig(renderer, "CreatorUI_DrawUI");
 	SDL_Rect BGRect = {0,0, *Width, *Height};
 	SDL_RenderFillRect(renderer, &BGRect);
 	
@@ -294,7 +294,7 @@ void CreatorUI::DrawUI()
 	
 	if(HasSelectedSeries){
 		//Draw box
-		DrawJsonColorConfig(renderer, "UI_borders_list");
+		SDL_SetRenderDrawColor(renderer,0 ,0 ,0 ,255);//DrawJsonColorConfig(renderer, "UI_borders_list");
 		SDL_Rect HeaderRect = {690,73, 270, 286};
 		SDL_RenderFillRect(renderer, &HeaderRect);
 	}
@@ -426,7 +426,7 @@ void CreatorUI::ListSelect()
 void CreatorUI::DrawHeader()
 {
 	//Draw the header
-	DrawJsonColorConfig(renderer, "CreatorUI_DrawHeader");
+	SDL_SetRenderDrawColor(renderer, 0, 188, 212, 255);//DrawJsonColorConfig(renderer, "CreatorUI_DrawHeader");
 	SDL_Rect HeaderRect = {0,0, *Width, HeaderHeight};
 	SDL_RenderFillRect(renderer, &HeaderRect);
 
@@ -531,7 +531,7 @@ void CreatorUI::DrawFooter()
 	int FooterYOffset = *Height - FooterHeight;
 	SDL_Rect SelectFooterRect = {0,FooterYOffset, *Width/2, FooterHeight};
 	string FooterText = "Select";
-	DrawJsonColorConfig(renderer, "CreatorUI_DrawFooter_Select");
+	SDL_SetRenderDrawColor(renderer, 0, 255, 0, 255);//DrawJsonColorConfig(renderer, "CreatorUI_DrawFooter_Select");
 	
 	//Select was pressed
 	if(CheckButtonPressed(&SelectFooterRect, TouchX, TouchY))
@@ -566,7 +566,7 @@ void CreatorUI::DrawFooter()
 	SDL_Rect BackFooterRect = {*Width/2,FooterYOffset, *Width/2, FooterHeight};
 	FooterText = "Back";
 	if(HasSelectedSeries)
-		DrawJsonColorConfig(renderer, "CreatorUI_DrawFooter_Back");
+		SDL_SetRenderDrawColor(renderer, 255, 0, 0, 255);//DrawJsonColorConfig(renderer, "CreatorUI_DrawFooter_Back");
 	else
 		SDL_SetRenderDrawColor(renderer, 100, 100, 100, 255);
 
@@ -600,7 +600,7 @@ void CreatorUI::PleaseWait(string mensage)
 	SDL_SetRenderDrawColor(renderer,0 ,0 ,0 ,255);
 	SDL_Rect MessageRect = {((*Width - MessageTextSurface->w) / 2)-5,((*Height - MessageTextSurface->h) / 2)-5, (MessageTextSurface->w)+7, (MessageTextSurface->h)+7};
 	SDL_RenderFillRect(renderer, &MessageRect);
-	DrawJsonColorConfig(renderer, "CreatorUI_PleaseWait");
+	SDL_SetRenderDrawColor(renderer, 0, 188, 212, 255);//DrawJsonColorConfig(renderer, "CreatorUI_PleaseWait");
 	MessageRect = {((*Width - MessageTextSurface->w) / 2)-3,((*Height - MessageTextSurface->h) / 2)-3, (MessageTextSurface->w)+3, (MessageTextSurface->h)+3};
 	SDL_RenderFillRect(renderer, &MessageRect);
 

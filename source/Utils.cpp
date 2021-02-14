@@ -153,4 +153,5 @@ void DrawJsonColorConfig(SDL_Renderer* renderer, string Head)
 		if (IDContents.size() != 0) IDContents = "";//reset json var
 	}
 }
+*/
 

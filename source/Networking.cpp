@@ -14,6 +14,36 @@
 
 extern bool ThreadReady;
 extern std::string cfgroot;
+//Write file in mem to increase download speed Applet mode only has 30 ~ 50 MB but is ok 
+struct MemoryStruct
+{
+  char *memory;
+  size_t size;
+  int mode;
+};
+
+static size_t write_memory_callback(void *contents, size_t size, size_t nmemb, void *userdata)
+{
+  size_t realsize = size * nmemb;
+  struct MemoryStruct *mem = (struct MemoryStruct *)userdata;
+
+  char *ptr = (char*)realloc(mem->memory, mem->size + realsize + 1);
+
+  if (ptr == NULL)
+  {
+      printf("Failed to realloc mem");
+      return 0;
+  }
+ 
+  mem->memory = ptr;
+  memcpy(&(mem->memory[mem->size]), contents, realsize);
+  mem->size += realsize;
+  mem->memory[mem->size] = 0;
+ 
+  return realsize;
+}
+
+
 //Stolen from Goldleaf
 //Thank you XOR
 std::size_t CurlStrWrite(const char* in, std::size_t size, std::size_t num, std::string* out)
@@ -62,17 +92,22 @@ void RetrieveToFile(std::string URL, std::string Path)
 		FILE *f = fopen(Path.c_str(), "wb");
 		if(f)
 		{
+			struct MemoryStruct chunk;
+            chunk.memory = (char*)malloc(1);
+            chunk.size = 0;
 			curl_easy_setopt(curl, CURLOPT_URL, URL.c_str());
 			curl_easy_setopt(curl, CURLOPT_USERAGENT, "Amiigo");
 			curl_easy_setopt(curl, CURLOPT_CAINFO, "romfs:/certificate.pem");
 			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYPEER, 0L);
 			curl_easy_setopt(curl, CURLOPT_SSL_VERIFYHOST, 0L);
 			curl_easy_setopt(curl, CURLOPT_FOLLOWLOCATION, 1L);
-			curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, CurlFileWrite);
-			curl_easy_setopt(curl, CURLOPT_WRITEDATA, f);
+            curl_easy_setopt(curl, CURLOPT_WRITEFUNCTION, write_memory_callback);
+            curl_easy_setopt(curl, CURLOPT_WRITEDATA, (void *)&chunk);
 			curl_easy_setopt(curl, CURLOPT_NOPROGRESS, 1L);
 			res = curl_easy_perform(curl);
+            fwrite(chunk.memory, 1, chunk.size, f);// write from mem to file
 			curl_easy_cleanup(curl);
+			free(chunk.memory);
 		}
 	fclose(f);
 	}else{
